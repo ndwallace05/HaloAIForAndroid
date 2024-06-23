@@ -1,6 +1,7 @@
 package xyz.haloai.haloai_android_productivity
 
 // Main NavBars for the app
+import android.app.Activity.ScreenCaptureCallback
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -58,7 +59,7 @@ fun TopBarForApp(title: String, scrollBehavior: TopAppBarScrollBehavior = TopApp
     .pinnedScrollBehavior(), navigateToPreviousScreen: () -> Unit = {}) {
     CenterAlignedTopAppBar(
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            containerColor = MaterialTheme.colorScheme.surface,
             titleContentColor = MaterialTheme.colorScheme.primary,
         ),
         title = {
@@ -70,7 +71,7 @@ fun TopBarForApp(title: String, scrollBehavior: TopAppBarScrollBehavior = TopApp
         },
         navigationIcon = {
             IconButton(onClick = {
-                navigateToPreviousScreen
+                navigateToPreviousScreen()
             }) {
                  Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -92,12 +93,14 @@ fun TopBarForApp(title: String, scrollBehavior: TopAppBarScrollBehavior = TopApp
     )
 }
 
-sealed class Screens(val route: String) {
-    object Home : Screens("home_route")
-    object Calendar : Screens("calendar_route")
-    object Assistant : Screens("assistant_route")
-    object Notes : Screens("notes_route")
-    object More : Screens("more_route")
+sealed class Screens(val route: String, val label: String) {
+    object Home : Screens("home_route", label = "Home")
+    object Calendar : Screens("calendar_route", label = "Calendar")
+    object Assistant : Screens("assistant_route", label = "Assistant")
+    object Notes : Screens("notes_route", label = "Notes")
+    object More : Screens("more_route", label = "More")
+    object Tasks : Screens("tasks_route", label = "Tasks")
+    object PlanWithHalo : Screens("plan_with_halo_route", label = "Plan with Halo")
 }
 
 // Defines Main Flows for the app
@@ -162,8 +165,24 @@ fun NavBarsWithContent() {
     val scope = rememberCoroutineScope()
     var showBottomSheet by remember { mutableStateOf(false) }
     val currentDestination = navBackStackEntry?.destination
+    val currentScreenTitle = when (navBackStackEntry?.destination?.route) {
+        Screens.Home.route -> Screens.Home.label
+        Screens.Calendar.route -> Screens.Calendar.label
+        Screens.Assistant.route -> Screens.Assistant.label
+        Screens.Notes.route -> Screens.Notes.label
+        Screens.More.route -> Screens.More.label
+        Screens.Tasks.route -> Screens.Tasks.label
+        Screens.PlanWithHalo.route -> Screens.PlanWithHalo.label
+        else -> "Halo AI"
+    }
     Scaffold(
         modifier = Modifier.fillMaxSize(),
+        topBar = {
+            TopBarForApp(currentScreenTitle,
+                navigateToPreviousScreen = {
+                navController.popBackStack()
+            })
+        },
         bottomBar = {
             NavigationBar {
                 BottomNavigationItem().bottomNavigationItems().forEachIndexed { _, navigationItem ->
