@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.Icon
@@ -275,7 +277,7 @@ fun CalendarView(
         Box(modifier = Modifier.fillMaxWidth()) {
             if (displayPrev)
                 Icon(
-                    imageVector = Icons.Filled.KeyboardArrowLeft,
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                     modifier = Modifier
                         .align(Alignment.CenterStart)
                         .clickable { onClickPrev() },
@@ -286,17 +288,17 @@ fun CalendarView(
                     modifier = Modifier
                         .align(Alignment.CenterEnd)
                         .clickable { onClickNext() },
-                    imageVector = Icons.Filled.KeyboardArrowRight,
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     contentDescription = "navigate to next month"
                 )
             Text(
                 text = month.formatToMonthString(),
-                style = MaterialTheme.typography.headlineMedium,
+                style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                 modifier = Modifier.align(Alignment.Center),
             )
         }
-        Spacer(modifier = Modifier.size(16.dp))
+        Spacer(modifier = Modifier.size(10.dp))
         if (!date.isNullOrEmpty()) {
             CalendarGrid(
                 date = date,

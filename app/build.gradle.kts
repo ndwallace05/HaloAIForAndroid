@@ -75,5 +75,6 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.guava)
+    implementation(libs.androidx.constraintlayout.compose.android)
 
 }

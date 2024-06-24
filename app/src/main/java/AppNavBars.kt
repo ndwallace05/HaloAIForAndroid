@@ -48,15 +48,26 @@ import androidx.navigation.compose.rememberNavController
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import androidx.navigation.NavHostController
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import kotlinx.coroutines.launch
 import xyz.haloai.haloai_android_productivity.screens.AssistantScreen
 import xyz.haloai.haloai_android_productivity.screens.CalendarScreen
 import xyz.haloai.haloai_android_productivity.screens.HomeScreen
+import xyz.haloai.haloai_android_productivity.screens.NotesScreen
+import xyz.haloai.haloai_android_productivity.screens.PlanWithHaloScreen
+import xyz.haloai.haloai_android_productivity.screens.ProfileScreen
+import xyz.haloai.haloai_android_productivity.screens.TasksScreen
+import xyz.haloai.haloai_android_productivity.xyz.haloai.haloai_android_productivity.screens.NoteDetailsScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopBarForApp(title: String, scrollBehavior: TopAppBarScrollBehavior = TopAppBarDefaults
-    .pinnedScrollBehavior(), navigateToPreviousScreen: () -> Unit = {}) {
+fun TopBarForApp(title: String,
+                 scrollBehavior: TopAppBarScrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(),
+                 navigateToPreviousScreen: () -> Unit = {},
+                 navController: NavHostController) {
     CenterAlignedTopAppBar(
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.surface,
@@ -70,18 +81,28 @@ fun TopBarForApp(title: String, scrollBehavior: TopAppBarScrollBehavior = TopApp
             )
         },
         navigationIcon = {
-            IconButton(onClick = {
-                navigateToPreviousScreen()
-            }) {
-                 Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Go back"
-                )
+            if (navController.currentDestination?.route != Screens.Home.route)
+            {
+                IconButton(onClick = {
+                    navigateToPreviousScreen()
+                }) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Go back"
+                    )
+                }
             }
         },
         actions = {
             IconButton(onClick = {
-                // TODO: Launch Profile screen
+                navController.navigate(Screens.Profile.route) {
+                    popUpTo(navController.graph.findStartDestination().id) {
+                        saveState = true
+                    }
+                    launchSingleTop = true
+                    restoreState = true
+                }
+
             }) {
                 Icon(
                     imageVector = Icons.Default.AccountCircle,
@@ -101,6 +122,14 @@ sealed class Screens(val route: String, val label: String) {
     object More : Screens("more_route", label = "More")
     object Tasks : Screens("tasks_route", label = "Tasks")
     object PlanWithHalo : Screens("plan_with_halo_route", label = "Plan with Halo")
+    object Profile : Screens("profile_route", label = "Profile")
+    object NoteDetails : Screens("note_details_route/{noteId}", label = "Note Details")
+}
+
+sealed class NotesDetailsScreenNav(val route: String) {
+    object Main: NotesDetailsScreenNav("note_details_route/{noteId}") {
+        fun createRoute(noteId: Long): String = "note_details_route/${noteId.toString()}"
+    }
 }
 
 // Defines Main Flows for the app
@@ -145,12 +174,22 @@ data class BottomNavigationItem(
             BottomNavigationItem(
                 label = "Tasks",
                 iconRes = R.drawable.tasks,
-                route = Screens.Home.route
+                route = Screens.Tasks.route
             ),
             BottomNavigationItem(
                 label = "Plan with Halo",
                 iconRes = R.drawable.long_term_goals,
-                route = Screens.Calendar.route
+                route = Screens.PlanWithHalo.route
+            ),
+        )
+    }
+
+    fun topBarNavigationItems() : List<BottomNavigationItem> {
+        return listOf(
+            BottomNavigationItem(
+                label = "Profile",
+                iconVector = Icons.Filled.AccountCircle,
+                route = Screens.Home.route
             ),
         )
     }
@@ -159,12 +198,12 @@ data class BottomNavigationItem(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NavBarsWithContent() {
-    val navController = rememberNavController()
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val sheetState = rememberModalBottomSheetState()
+    val navController = rememberNavController() // Navigation controller
+    val navBackStackEntry by navController.currentBackStackEntryAsState() // Current backstack entry
+    val sheetState = rememberModalBottomSheetState() // Modal bottom sheet state for more navigation items
     val scope = rememberCoroutineScope()
-    var showBottomSheet by remember { mutableStateOf(false) }
-    val currentDestination = navBackStackEntry?.destination
+    var showBottomSheet by remember { mutableStateOf(false) } // Show bottom sheet state variable
+    val currentDestination = navBackStackEntry?.destination // Current destination
     val currentScreenTitle = when (navBackStackEntry?.destination?.route) {
         Screens.Home.route -> Screens.Home.label
         Screens.Calendar.route -> Screens.Calendar.label
@@ -173,6 +212,7 @@ fun NavBarsWithContent() {
         Screens.More.route -> Screens.More.label
         Screens.Tasks.route -> Screens.Tasks.label
         Screens.PlanWithHalo.route -> Screens.PlanWithHalo.label
+        Screens.Profile.route -> Screens.Profile.label
         else -> "Halo AI"
     }
     Scaffold(
@@ -181,13 +221,14 @@ fun NavBarsWithContent() {
             TopBarForApp(currentScreenTitle,
                 navigateToPreviousScreen = {
                 navController.popBackStack()
-            })
+            },
+                navController = navController)
         },
         bottomBar = {
             NavigationBar {
                 BottomNavigationItem().bottomNavigationItems().forEachIndexed { _, navigationItem ->
                     NavigationBarItem(
-                        selected = navigationItem.route == currentDestination?.route,
+                        selected = navigationItem.route == currentDestination?.route, // Check if the current destination is the same as the navigation item
                         label = {
                             Text(navigationItem.label)
                         },
@@ -226,24 +267,50 @@ fun NavBarsWithContent() {
             modifier = Modifier.padding(paddingValues = paddingValues)) {
             composable(Screens.Home.route) {
                 HomeScreen(
-                    navController
+                    navController = navController
                 )
             }
             composable(Screens.Calendar.route) {
                 CalendarScreen(
-                    navController
+                    navController = navController
                 )
             }
             composable(Screens.Assistant.route) {
                 AssistantScreen(
-                    navController
+                    navController = navController
                 )
             }
             composable(Screens.Notes.route) {
-                //
+                NotesScreen(
+                    navController = navController
+                )
             }
             composable(Screens.More.route) {
                 showBottomSheet = true
+            }
+            composable(Screens.Profile.route) {
+                ProfileScreen(
+                    navController = navController
+                )
+            }
+            composable(Screens.Tasks.route) {
+                TasksScreen(
+                    navController = navController
+                )
+            }
+            composable(Screens.PlanWithHalo.route) {
+                PlanWithHaloScreen(
+                    navController = navController
+                )
+            }
+            composable(Screens.NoteDetails.route,
+                arguments = listOf(navArgument("noteId") {
+                    defaultValue = "1"
+                    type = NavType.StringType // Room db id for note
+                })) {
+                    backStackEntry ->
+                val noteId = backStackEntry.arguments?.getString("noteId")
+                NoteDetailsScreen(navController = navController, noteId = noteId!!)
             }
         }
         if (showBottomSheet) {
@@ -262,15 +329,24 @@ fun NavBarsWithContent() {
                     BottomNavigationItem().moreNavigationItems().forEachIndexed { _, navigationItem ->
                         Column(
                             modifier = Modifier
-                                .weight(1F).align(Alignment.CenterVertically)
-                                .clickable {  } //
-                        // Create a nav 
-                        // action
+                                .weight(1F)
+                                .align(Alignment.CenterVertically)
+                                .clickable {
+                                    navController.navigate(navigationItem.route) {
+                                        popUpTo(navController.graph.findStartDestination().id) {
+                                            saveState = true
+                                        }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                    showBottomSheet = false
+                                }
                         ){
                             if (navigationItem.iconRes != null) {
                                 Icon(painter = painterResource(id = navigationItem.iconRes),
                                     contentDescription= navigationItem.label, modifier = Modifier
-                                        .fillMaxHeight(0.05F).align(Alignment.CenterHorizontally))
+                                        .fillMaxHeight(0.05F)
+                                        .align(Alignment.CenterHorizontally))
                             }
                             else {
                                 Icon(imageVector = navigationItem.iconVector!!, contentDescription

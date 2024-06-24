@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -33,6 +34,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -128,8 +130,9 @@ fun ProductivityFeedCard() {
 
             Text(
                 text = "Pending since 2 days",
+                fontWeight = FontWeight.Thin,
                 fontSize = 14.sp,
-                color = Color.Gray,
+                // color = Color.Gray,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
 
@@ -138,7 +141,9 @@ fun ProductivityFeedCard() {
             Text(
                 text = "\"I'll send over the Figma shortly\"",
                 fontSize = 14.sp,
-                color = Color.Gray,
+                // Italic
+                fontStyle = FontStyle.Italic,
+                // color = Color.Gray,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
 
@@ -151,7 +156,7 @@ fun ProductivityFeedCard() {
                 Button(
                     onClick = { /*TODO*/ },
                     modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Blue)
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
                     Text(text = "Add to tasks")
                 }
@@ -159,7 +164,7 @@ fun ProductivityFeedCard() {
                 Button(
                     onClick = { /*TODO*/ },
                     modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Blue)
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
                     Text(text = "Choose Option")
                 }

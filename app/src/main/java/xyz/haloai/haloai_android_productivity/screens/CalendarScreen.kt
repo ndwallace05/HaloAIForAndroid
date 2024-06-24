@@ -2,6 +2,7 @@ package xyz.haloai.haloai_android_productivity.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,8 +18,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,6 +38,7 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import kotlin.math.abs
 
 @Composable
 fun CalendarScreen(navController: NavController) {
@@ -41,6 +46,8 @@ fun CalendarScreen(navController: NavController) {
     val expanded = remember { mutableStateOf(false) }
     val selectedDate = remember { mutableStateOf(Date()) }
     val dragThreshold: Float = 12f.toPx()
+    var dragAmountX by remember { mutableFloatStateOf(0f) }
+    var dragAmountY by remember { mutableFloatStateOf(0f) }
     HaloAI_Android_ProductivityTheme {
         Surface(
             modifier = Modifier.fillMaxSize(),
@@ -87,16 +94,64 @@ fun CalendarScreen(navController: NavController) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .pointerInput(Unit) {
-                            detectVerticalDragGestures { change, dragAmount ->
-                                change.consume()
-                                if (dragAmount < -dragThreshold) {
-                                    // Dragged up
-                                    expanded.value = false
-                                } else if (dragAmount > dragThreshold) {
-                                    // Dragged down
-                                    expanded.value = true
+                            detectDragGestures(
+                                onDragStart = {
+                                    dragAmountX = 0f
+                                    dragAmountY = 0f
+                                },
+                                onDragEnd = {
+                                    if (abs(dragAmountX) > abs(dragAmountY))
+                                    {
+                                        when {
+                                            dragAmountX < -dragThreshold -> {
+                                                // Dragged left
+                                                if (expanded.value) {
+                                                    selectedDate.value = Calendar.getInstance().apply {
+                                                        time = selectedDate.value
+                                                        add(Calendar.MONTH, 1)
+                                                    }.time
+                                                } else {
+                                                    selectedDate.value = Calendar.getInstance().apply {
+                                                        time = selectedDate.value
+                                                        add(Calendar.WEEK_OF_YEAR, 1)
+                                                    }.time
+                                                }
+                                            }
+                                            dragAmountX > dragThreshold -> {
+                                                // Dragged right
+                                                if (expanded.value) {
+                                                    selectedDate.value = Calendar.getInstance().apply {
+                                                        time = selectedDate.value
+                                                        add(Calendar.MONTH, -1)
+                                                    }.time
+                                                } else {
+                                                    selectedDate.value = Calendar.getInstance().apply {
+                                                        time = selectedDate.value
+                                                        add(Calendar.WEEK_OF_YEAR, -1)
+                                                    }.time
+                                                }
+                                            }
+                                        }
+                                    }
+                                    else {
+                                        when {
+                                            dragAmountY < -dragThreshold -> {
+                                                // Dragged up
+                                                expanded.value = false
+                                            }
+                                            dragAmountY > dragThreshold -> {
+                                                // Dragged down
+                                                expanded.value = true
+                                            }
+                                        }
+                                    }
+                                },
+                                onDrag = { change, dragAmount ->
+                                    change.consume()
+                                    dragAmountX += dragAmount.x
+                                    dragAmountY += dragAmount.y
                                 }
-                            }
+                            )
                         }
                 )
                 // A bar (small rectangle, rounded corners) which when clicked will expand the calendar to show the entire month

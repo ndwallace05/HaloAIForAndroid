@@ -1,60 +1,191 @@
 package xyz.haloai.haloai_android_productivity.screens
 
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import xyz.haloai.haloai_android_productivity.R
 import xyz.haloai.haloai_android_productivity.ui.theme.HaloAI_Android_ProductivityTheme
 
+val conversation: StateFlow<List<ChatHistory.Message>>
+    get() = _conversation
+
+private val _conversation = MutableStateFlow(
+    listOf(ChatHistory.Message.initConv, ChatHistory.Message.initConvResp, ChatHistory.Message
+        .initConv, ChatHistory.Message.initConvResp, ChatHistory.Message.initConv, ChatHistory
+            .Message.initConvResp, ChatHistory.Message.initConv, ChatHistory.Message
+                .initConvResp, ChatHistory.Message.initConv, ChatHistory.Message.initConvResp,
+        ChatHistory.Message.initConv, ChatHistory.Message.initConvResp, ChatHistory.Message
+            .initConv, ChatHistory.Message.initConvResp, ChatHistory.Message.initConv,
+        ChatHistory.Message.initConvResp, ChatHistory.Message.initConv, ChatHistory.Message.initConvResp, ChatHistory.Message.initConv, ChatHistory.Message.initConvResp
+    ) // TODO: Replace with final initial message
+)
+
 @Composable
 fun AssistantScreen(navController: NavController) {
+
     HaloAI_Android_ProductivityTheme {
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
             Column(
-                modifier = Modifier.fillMaxSize().padding(15.dp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(15.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Box(
-                    modifier = Modifier.fillMaxWidth()
-                        .height(200.dp)
-                        .padding(horizontal = 15.dp, vertical = 10.dp)
-                        .clip(MaterialTheme.shapes.large)
-                ) {
-                    Image(
-                        painter = painterResource(R.drawable.ic_launcher_background),
-                        contentDescription = "home_screen_bg",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
+                ChatThread(
+                    modifier = Modifier.fillMaxSize(),
+                    model = ChatHistory(
+                        messages = conversation.collectAsState().value
                     )
-                }
-                Text(
-                    "Assistant Screen",
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.padding(vertical = 20.dp)
                 )
             }
         }
     }
 }
 
+@Composable
+fun MessageBox(message: ChatHistory.Message, modifier: Modifier) {
+    Box(
+        modifier = modifier
+            .clip(
+                RoundedCornerShape(
+                    topStart = 48f,
+                    topEnd = 48f,
+                    bottomStart = if (message.isFromMe) 48f else 0f,
+                    bottomEnd = if (message.isFromMe) 0f else 48f
+                )
+            )
+            .background(if (message.isFromMe) MaterialTheme.colorScheme.primaryContainer else
+                MaterialTheme.colorScheme.tertiaryContainer)
+            .padding(8.dp)
+    ) {
+        Text(text = message.text, color = if (message.isFromMe) MaterialTheme.colorScheme.onPrimaryContainer else
+            MaterialTheme.colorScheme.onTertiaryContainer)
+    }
+}
+
+data class ChatHistory(
+    val messages: List<Message>) {
+    data class Message(
+        val text: String,
+        val isUserMessage: Boolean,
+    ) {
+        val isFromMe: Boolean
+            get() = isUserMessage
+
+        companion object {
+            val initConv = Message(
+                text = "Hi there, how you doing?",
+                isUserMessage = false
+            )
+            val initConvResp = Message(
+                text = "I'm doing great, how about you?",
+                isUserMessage = true
+            )
+        }
+    }
+}
+
+@Composable
+fun ChatThread(modifier: Modifier, model: ChatHistory){
+    Box(modifier = modifier.fillMaxSize()) {
+
+        LazyColumn {
+            items(model.messages) { item ->
+                Box(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
+                    if (item.isUserMessage)
+                        MessageBox(item, modifier = Modifier.align(Alignment.CenterEnd))
+                    else
+                        MessageBox(item, modifier = Modifier.align(Alignment.CenterStart))
+                    // MessageBox(item)
+                }
+            }
+        }
+
+        SearchBarForAssistant(modifier = Modifier.align(Alignment.BottomCenter))
+    }
+}
+
+@Composable
+fun SearchBarForAssistant(modifier: Modifier) {
+    var searchState by remember { mutableStateOf(TextFieldValue("")) }
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(8.dp)
+            .background(
+                MaterialTheme.colorScheme.surface,
+                shape = RoundedCornerShape(12.dp)
+            )
+            .border(
+                1.dp,
+                MaterialTheme.colorScheme.inverseSurface,
+                shape = RoundedCornerShape(12.dp)
+            )
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.haloai_logo),
+                contentDescription = "Search Icon",
+                modifier = Modifier.padding(8.dp).size(30.dp)
+            )
+            BasicTextField(
+                value = searchState,
+                onValueChange = { searchState = it },
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(8.dp),
+                singleLine = true
+            )
+            Icon(
+                painter = painterResource(id = R.drawable.baseline_mic_24),
+                contentDescription = "Voice Icon",
+                modifier = Modifier.padding(8.dp).size(30.dp)
+            )
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                contentDescription = "Arrow Icon",
+                modifier = Modifier.padding(8.dp).size(30.dp)
+            )
+        }
+    }
+}
 
