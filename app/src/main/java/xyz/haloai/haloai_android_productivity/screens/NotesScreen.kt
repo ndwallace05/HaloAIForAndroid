@@ -33,8 +33,8 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import xyz.haloai.haloai_android_productivity.NotesDetailsScreenNav
 import xyz.haloai.haloai_android_productivity.R
-import xyz.haloai.haloai_android_productivity.Screens
 import xyz.haloai.haloai_android_productivity.ui.theme.HaloAI_Android_ProductivityTheme
 
 @Composable
@@ -59,14 +59,14 @@ fun NotesScreen(navController: NavController) {
                     }
                 }
 
-                SearchBar(modifier = Modifier.align(Alignment.BottomCenter))
+                SearchBarForNotes(modifier = Modifier.align(Alignment.BottomCenter))
             }
         }
     }
 }
 
 @Composable
-fun SearchBar(modifier: Modifier) {
+fun SearchBarForNotes(modifier: Modifier) {
     var searchState by remember { mutableStateOf(TextFieldValue("")) }
     Box(
         modifier = modifier
@@ -123,7 +123,7 @@ fun NoteItem(note: String, navController: NavController) {
                 MaterialTheme.colorScheme.primaryContainer,
                 shape = RoundedCornerShape(12.dp)
             )
-            .clickable { navController.navigate(Screens.NoteDetails.route.replace("{noteId}", "1")) }
+            .clickable { navController.navigate(NotesDetailsScreenNav.Main.createRoute("1")) }
     ) {
         Column(
             modifier = Modifier

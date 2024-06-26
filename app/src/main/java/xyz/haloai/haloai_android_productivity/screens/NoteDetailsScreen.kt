@@ -1,6 +1,7 @@
 package xyz.haloai.haloai_android_productivity.xyz.haloai.haloai_android_productivity.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -31,12 +32,15 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import xyz.haloai.haloai_android_productivity.NotesDetailsScreenNav
+import xyz.haloai.haloai_android_productivity.screens.NotesScreen_GenerateTasksPopup
 
 @Composable
 fun NoteDetailsScreen(navController: NavController, noteId: String) {
     // TODO: Fetch note details from database
     var title by remember { mutableStateOf(TextFieldValue("Europe Trip")) }
     var content by remember { mutableStateOf(TextFieldValue("List of things to do in Europe\n\n• Colosseum\n• Decide Cities\n• Visa\n• Dates\n• Flights\n  • Go on 15th Jan?\n• Budget\n• Places to visit:\n  • A\n  • B\n  • C\n  • D")) }
+    var showGenerateTasksPopup by remember { mutableStateOf(false) }
 
     MaterialTheme {
         Column(
@@ -45,14 +49,24 @@ fun NoteDetailsScreen(navController: NavController, noteId: String) {
                 .padding(16.dp)
         ) {
             Row(
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth
+                    (), horizontalArrangement = Arrangement.Center
             ) {
-                Button(onClick = { /* TODO: Implement generate tasks action */ }, modifier = Modifier.background(MaterialTheme.colorScheme.primary, shape = RoundedCornerShape(8.dp))) {
-                    Text(text = "Generate Tasks", modifier = Modifier.padding(8.dp), color = MaterialTheme.colorScheme.onPrimaryContainer)
+                Button(onClick = { showGenerateTasksPopup = true }, modifier =
+                Modifier
+                    .background(MaterialTheme
+                    .colorScheme.primary, shape = RoundedCornerShape(8.dp))) {
+                    Text(text = "Generate Tasks", modifier = Modifier.padding(8.dp), color = MaterialTheme.colorScheme.onPrimary)
                 }
                 Spacer(modifier = Modifier.width(8.dp))
-                Button(onClick = { /* TODO: Implement generate tasks action */ }, modifier = Modifier.background(MaterialTheme.colorScheme.primary, shape = RoundedCornerShape(8.dp))) {
-                    Text(text = "Plan with Halo", modifier = Modifier.padding(8.dp), color = MaterialTheme.colorScheme.onPrimaryContainer)
+                Button(onClick = { navController.navigate(NotesDetailsScreenNav.PlanWithHalo
+                    .createRoute(noteId)) },
+                    modifier =
+                Modifier.background
+                    (MaterialTheme
+                    .colorScheme
+                    .primary, shape = RoundedCornerShape(8.dp))) {
+                    Text(text = "Plan with Halo", modifier = Modifier.padding(8.dp), color = MaterialTheme.colorScheme.onPrimary)
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
@@ -82,6 +96,10 @@ fun NoteDetailsScreen(navController: NavController, noteId: String) {
                     modifier = Modifier
                         .fillMaxWidth().padding(vertical = 8.dp, horizontal = 12.dp)
                 )
+            }
+            if (showGenerateTasksPopup) {
+                NotesScreen_GenerateTasksPopup(noteId, onDismissRequest = { showGenerateTasksPopup =
+                    false })
             }
         }
     }

@@ -74,7 +74,9 @@ dependencies {
     implementation(libs.material3)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.navigation.compose)
-    implementation(libs.guava)
+    implementation(libs.guava) // For immutable list
     implementation(libs.androidx.constraintlayout.compose.android)
+    implementation(libs.accompanist.permissions) // For requesting
+// permissions
 
 }

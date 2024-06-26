@@ -1,4 +1,5 @@
 [versions]
+accompanistPermissions = "0.35.1-alpha"
 activityComposeVersion = "1.4.0"
 agp = "8.4.1"
 constraintlayoutComposeAndroid = "1.1.0-alpha13"
@@ -14,6 +15,7 @@ composeBom = "2023.08.00"
 navigationCompose = "2.7.7"
 
 [libraries]
+accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissions" }
 androidx-activity-compose-v140 = { module = "androidx.activity:activity-compose", version.ref = "activityComposeVersion" }
 androidx-constraintlayout-compose-android = { module = "androidx.constraintlayout:constraintlayout-compose-android", version.ref = "constraintlayoutComposeAndroid" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }

@@ -1,8 +1,6 @@
 package xyz.haloai.haloai_android_productivity
 
 // Main NavBars for the app
-import android.app.Activity.ScreenCaptureCallback
-import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,7 +14,6 @@ import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -26,7 +23,6 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
@@ -48,17 +44,18 @@ import androidx.navigation.compose.rememberNavController
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
-import kotlinx.coroutines.launch
 import xyz.haloai.haloai_android_productivity.screens.AssistantScreen
 import xyz.haloai.haloai_android_productivity.screens.CalendarScreen
+import xyz.haloai.haloai_android_productivity.screens.CustomizeLTGoalScreen
 import xyz.haloai.haloai_android_productivity.screens.HomeScreen
 import xyz.haloai.haloai_android_productivity.screens.NotesScreen
 import xyz.haloai.haloai_android_productivity.screens.PlanWithHaloScreen
+import xyz.haloai.haloai_android_productivity.screens.PlanWithHalo_Notes_Screen
 import xyz.haloai.haloai_android_productivity.screens.ProfileScreen
+import xyz.haloai.haloai_android_productivity.screens.SettingsScreen
 import xyz.haloai.haloai_android_productivity.screens.TasksScreen
 import xyz.haloai.haloai_android_productivity.xyz.haloai.haloai_android_productivity.screens.NoteDetailsScreen
 
@@ -123,12 +120,29 @@ sealed class Screens(val route: String, val label: String) {
     object Tasks : Screens("tasks_route", label = "Tasks")
     object PlanWithHalo : Screens("plan_with_halo_route", label = "Plan with Halo")
     object Profile : Screens("profile_route", label = "Profile")
+    object Settings : Screens("settings_route", label = "Settings")
     object NoteDetails : Screens("note_details_route/{noteId}", label = "Note Details")
+    object PlanWithHalo_NoteDetails : Screens("note_details_plan_with_halo_route/{noteId}", label
+    = "Plan with Halo - Notes")
+
+    object CustomizeLTGoal : Screens("customize_lt_goal_route/{ltGoalId}", label = "Customize Plan")
+
 }
 
 sealed class NotesDetailsScreenNav(val route: String) {
     object Main: NotesDetailsScreenNav("note_details_route/{noteId}") {
-        fun createRoute(noteId: Long): String = "note_details_route/${noteId.toString()}"
+        fun createRoute(noteId: String): String = "note_details_route/$noteId"
+    }
+
+    object PlanWithHalo: NotesDetailsScreenNav("note_details_plan_with_halo_route/{noteId}") {
+        fun createRoute(noteId: String): String = "note_details_plan_with_halo_route/${noteId}"
+    }
+}
+
+sealed class PlanWithHaloScreenNav(val route: String) {
+
+    object CustomizeLTGoal: PlanWithHaloScreenNav("customize_lt_goal_route/{ltGoalId}") {
+        fun createRoute(ltGoalId: String): String = "customize_lt_goal_route/${ltGoalId}"
     }
 }
 
@@ -201,7 +215,6 @@ fun NavBarsWithContent() {
     val navController = rememberNavController() // Navigation controller
     val navBackStackEntry by navController.currentBackStackEntryAsState() // Current backstack entry
     val sheetState = rememberModalBottomSheetState() // Modal bottom sheet state for more navigation items
-    val scope = rememberCoroutineScope()
     var showBottomSheet by remember { mutableStateOf(false) } // Show bottom sheet state variable
     val currentDestination = navBackStackEntry?.destination // Current destination
     val currentScreenTitle = when (navBackStackEntry?.destination?.route) {
@@ -213,6 +226,10 @@ fun NavBarsWithContent() {
         Screens.Tasks.route -> Screens.Tasks.label
         Screens.PlanWithHalo.route -> Screens.PlanWithHalo.label
         Screens.Profile.route -> Screens.Profile.label
+        Screens.NoteDetails.route -> Screens.NoteDetails.label
+        Screens.PlanWithHalo_NoteDetails.route -> Screens.PlanWithHalo_NoteDetails.label
+        Screens.Settings.route -> Screens.Settings.label
+        Screens.CustomizeLTGoal.route -> Screens.CustomizeLTGoal.label
         else -> "Halo AI"
     }
     Scaffold(
@@ -311,6 +328,28 @@ fun NavBarsWithContent() {
                     backStackEntry ->
                 val noteId = backStackEntry.arguments?.getString("noteId")
                 NoteDetailsScreen(navController = navController, noteId = noteId!!)
+            }
+            composable(Screens.PlanWithHalo_NoteDetails.route,
+                arguments = listOf(navArgument("noteId") {
+                defaultValue = "1"
+                type = NavType.StringType // Room db id for note
+            })) {
+                backStackEntry ->
+                val noteId = backStackEntry.arguments?.getString("noteId")
+                PlanWithHalo_Notes_Screen(navController = navController, noteId = noteId!!)
+            }
+            composable(Screens.Settings.route) {
+                // Settings screen
+                SettingsScreen(navController = navController)
+            }
+            composable(Screens.CustomizeLTGoal.route, arguments = listOf(navArgument("ltGoalId") {
+                defaultValue = "1"
+                type = NavType.StringType // Room db id for long term goal
+            })) {
+                backStackEntry ->
+                val ltGoalId = backStackEntry.arguments?.getString("ltGoalId")
+                // Customize long term goal screen
+                CustomizeLTGoalScreen(navController = navController, ltGoalId = ltGoalId!!)
             }
         }
         if (showBottomSheet) {
