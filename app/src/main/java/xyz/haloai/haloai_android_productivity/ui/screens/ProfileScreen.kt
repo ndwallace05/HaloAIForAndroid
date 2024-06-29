@@ -1,4 +1,4 @@
-package xyz.haloai.haloai_android_productivity.screens
+package xyz.haloai.haloai_android_productivity.xyz.haloai.haloai_android_productivity.data.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -27,6 +27,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -34,11 +40,30 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import xyz.haloai.haloai_android_productivity.Screens
-import xyz.haloai.haloai_android_productivity.ui.theme.HaloAI_Android_ProductivityTheme
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
+import xyz.haloai.haloai_android_productivity.data.ui.theme.HaloAI_Android_ProductivityTheme
+import xyz.haloai.haloai_android_productivity.data.ui.viewmodel.EmailDbViewModel
+import xyz.haloai.haloai_android_productivity.ui.screens.ChooseGoogleAccountsDialog
+import xyz.haloai.haloai_android_productivity.xyz.haloai.haloai_android_productivity.Screens
 
 @Composable
 fun ProfileScreen(navController: NavController) {
+    var showAddGoogleAccountsDialog by remember { mutableStateOf(false) }
+    val emailDbViewModel: EmailDbViewModel = koinViewModel()
+    val coroutineScope = rememberCoroutineScope()
+    var accountsAdded by remember { mutableStateOf(emptyList<String>()) }
+
+    LaunchedEffect(Unit) {
+        coroutineScope.launch { accountsAdded = emailDbViewModel.allEmailIds()}
+    }
+
+    LaunchedEffect (key1 = showAddGoogleAccountsDialog) {
+        delay(1000) // Wait for any db operations to complete
+        coroutineScope.launch { accountsAdded = emailDbViewModel.allEmailIds()}
+    }
+
     HaloAI_Android_ProductivityTheme {
         Surface(
             modifier = Modifier.fillMaxSize(),
@@ -81,13 +106,18 @@ fun ProfileScreen(navController: NavController) {
                     }
 
                     item {
-                        AccountsSection(
-                            emails = listOf(
-                                "email1@gmail.com",
-                                "email1@gmail.com",
-                                "email1@gmail.com"
+                        if (accountsAdded.isNotEmpty()) {
+                            AccountsSection(
+                                emails = accountsAdded
                             )
-                        )
+                        }
+                        else {
+                            Text(
+                                text = "No accounts added yet. Add your email accounts to get started.",
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                fontSize = 16.sp
+                            )
+                        }
                     }
 
                     item {
@@ -99,7 +129,8 @@ fun ProfileScreen(navController: NavController) {
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.Center
                         ) {
-                            Button(onClick = { /*TODO*/ }, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary), shape = RoundedCornerShape(8.dp)) {
+                            Button(onClick = { showAddGoogleAccountsDialog = true }, colors =
+                            ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary), shape = RoundedCornerShape(8.dp)) {
                                 Text("Add Gmail", color = MaterialTheme.colorScheme.onPrimary)
                             }
                             Spacer(modifier = Modifier.width(8.dp))
@@ -108,6 +139,11 @@ fun ProfileScreen(navController: NavController) {
                             }
                         }
                     }
+                }
+                if (showAddGoogleAccountsDialog) {
+                    ChooseGoogleAccountsDialog(
+                        onDismissRequest = { showAddGoogleAccountsDialog = false }
+                    )
                 }
             }
         }
@@ -131,7 +167,8 @@ fun UserPersonaSection() {
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
                 elevation = CardDefaults.cardElevation(4.dp),
                 modifier = Modifier
-                    .fillMaxWidth().padding(bottom = 8.dp)
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp)
             ) {
                 Column(
                     modifier = Modifier

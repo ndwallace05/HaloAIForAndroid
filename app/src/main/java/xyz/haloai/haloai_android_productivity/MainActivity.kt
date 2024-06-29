@@ -11,7 +11,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import xyz.haloai.haloai_android_productivity.ui.theme.HaloAI_Android_ProductivityTheme
+import xyz.haloai.haloai_android_productivity.data.ui.theme.HaloAI_Android_ProductivityTheme
+import xyz.haloai.haloai_android_productivity.xyz.haloai.haloai_android_productivity.NavBarsWithContent
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

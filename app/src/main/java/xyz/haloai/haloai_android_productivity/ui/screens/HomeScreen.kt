@@ -1,4 +1,4 @@
-package xyz.haloai.haloai_android_productivity.screens
+package xyz.haloai.haloai_android_productivity.xyz.haloai.haloai_android_productivity.data.ui.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -37,7 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import xyz.haloai.haloai_android_productivity.R
-import xyz.haloai.haloai_android_productivity.ui.theme.HaloAI_Android_ProductivityTheme
+import xyz.haloai.haloai_android_productivity.data.ui.theme.HaloAI_Android_ProductivityTheme
 
 @Composable
 fun HomeScreen(navController: NavController) {

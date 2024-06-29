@@ -1,5 +1,6 @@
-package xyz.haloai.haloai_android_productivity.screens
+package xyz.haloai.haloai_android_productivity.xyz.haloai.haloai_android_productivity.data.ui.screens
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -36,7 +37,7 @@ import androidx.navigation.NavController
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
-import xyz.haloai.haloai_android_productivity.ui.theme.HaloAI_Android_ProductivityTheme
+import xyz.haloai.haloai_android_productivity.data.ui.theme.HaloAI_Android_ProductivityTheme
 
 @Composable
 fun SettingsScreen(navController: NavController) {
@@ -167,36 +168,36 @@ fun AllPermissionSwitches()
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         PermissionSwitchItem(
             title = "Gallery",
-            permission = android.Manifest.permission.READ_MEDIA_IMAGES
+            permission = Manifest.permission.READ_MEDIA_IMAGES
         )
     }
     else {
         PermissionSwitchItem(
             title = "Gallery",
-            permission = android.Manifest.permission.READ_EXTERNAL_STORAGE
+            permission = Manifest.permission.READ_EXTERNAL_STORAGE
         )
     }
     PermissionSwitchItem(
         title = "Audio",
-        permission = android.Manifest.permission.RECORD_AUDIO
+        permission = Manifest.permission.RECORD_AUDIO
     )
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         PermissionSwitchItem(
             title = "Notifications",
-            permission = android.Manifest.permission.POST_NOTIFICATIONS
+            permission = Manifest.permission.POST_NOTIFICATIONS
         )
     }
     PermissionSwitchItem(
         title = "Calendar",
-        permission = android.Manifest.permission.READ_CALENDAR
+        permission = Manifest.permission.READ_CALENDAR
     )
     PermissionSwitchItem(
         title = "Contacts",
-        permission = android.Manifest.permission.READ_CONTACTS
+        permission = Manifest.permission.READ_CONTACTS
     )
     PermissionSwitchItem(
         title = "Accounts",
-        permission = android.Manifest.permission.GET_ACCOUNTS
+        permission = Manifest.permission.GET_ACCOUNTS
     )
 }
 

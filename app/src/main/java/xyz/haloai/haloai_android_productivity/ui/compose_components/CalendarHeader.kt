@@ -1,4 +1,4 @@
-package xyz.haloai.haloai_android_productivity.compose_components
+package xyz.haloai.haloai_android_productivity.data.ui.compose_components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

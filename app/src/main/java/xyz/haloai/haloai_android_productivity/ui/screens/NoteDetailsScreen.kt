@@ -1,4 +1,4 @@
-package xyz.haloai.haloai_android_productivity.xyz.haloai.haloai_android_productivity.screens
+package xyz.haloai.haloai_android_productivity.xyz.haloai.haloai_android_productivity.data.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -32,8 +32,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import xyz.haloai.haloai_android_productivity.NotesDetailsScreenNav
-import xyz.haloai.haloai_android_productivity.screens.NotesScreen_GenerateTasksPopup
+import xyz.haloai.haloai_android_productivity.xyz.haloai.haloai_android_productivity.NotesDetailsScreenNav
 
 @Composable
 fun NoteDetailsScreen(navController: NavController, noteId: String) {
@@ -59,7 +58,8 @@ fun NoteDetailsScreen(navController: NavController, noteId: String) {
                     Text(text = "Generate Tasks", modifier = Modifier.padding(8.dp), color = MaterialTheme.colorScheme.onPrimary)
                 }
                 Spacer(modifier = Modifier.width(8.dp))
-                Button(onClick = { navController.navigate(NotesDetailsScreenNav.PlanWithHalo
+                Button(onClick = { navController.navigate(
+                    NotesDetailsScreenNav.PlanWithHalo
                     .createRoute(noteId)) },
                     modifier =
                 Modifier.background

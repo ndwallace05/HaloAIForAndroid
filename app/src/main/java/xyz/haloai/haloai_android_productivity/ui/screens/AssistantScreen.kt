@@ -1,4 +1,4 @@
-package xyz.haloai.haloai_android_productivity.screens
+package xyz.haloai.haloai_android_productivity.xyz.haloai.haloai_android_productivity.data.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -19,6 +19,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -27,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
@@ -34,24 +36,38 @@ import androidx.navigation.NavController
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import xyz.haloai.haloai_android_productivity.R
-import xyz.haloai.haloai_android_productivity.ui.theme.HaloAI_Android_ProductivityTheme
+import xyz.haloai.haloai_android_productivity.data.ui.theme.HaloAI_Android_ProductivityTheme
 
-val conversation_ltGoal: StateFlow<List<ChatHistory.Message>>
+val conversation: StateFlow<List<ChatHistory.Message>>
     get() = _conversation
 
 private val _conversation = MutableStateFlow(
-    listOf(ChatHistory.Message.initConv, ChatHistory.Message.initConvResp, ChatHistory.Message
-        .initConv, ChatHistory.Message.initConvResp, ChatHistory.Message.initConv, ChatHistory
-        .Message.initConvResp, ChatHistory.Message.initConv, ChatHistory.Message
-        .initConvResp, ChatHistory.Message.initConv, ChatHistory.Message.initConvResp,
-        ChatHistory.Message.initConv, ChatHistory.Message.initConvResp, ChatHistory.Message
-            .initConv, ChatHistory.Message.initConvResp, ChatHistory.Message.initConv,
-        ChatHistory.Message.initConvResp, ChatHistory.Message.initConv, ChatHistory.Message.initConvResp, ChatHistory.Message.initConv, ChatHistory.Message.initConvResp
+    listOf(
+        ChatHistory.Message.initConv,
+        ChatHistory.Message.initConvResp,
+        ChatHistory.Message.initConv,
+        ChatHistory.Message.initConvResp,
+        ChatHistory.Message.initConv,
+        ChatHistory.Message.initConvResp,
+        ChatHistory.Message.initConv,
+        ChatHistory.Message.initConvResp,
+        ChatHistory.Message.initConv,
+        ChatHistory.Message.initConvResp,
+        ChatHistory.Message.initConv,
+        ChatHistory.Message.initConvResp,
+        ChatHistory.Message.initConv,
+        ChatHistory.Message.initConvResp,
+        ChatHistory.Message.initConv,
+        ChatHistory.Message.initConvResp,
+        ChatHistory.Message.initConv,
+        ChatHistory.Message.initConvResp,
+        ChatHistory.Message.initConv,
+        ChatHistory.Message.initConvResp
     ) // TODO: Replace with final initial message
 )
 
 @Composable
-fun CustomizeLTGoalScreen(navController: NavController, ltGoalId: String) {
+fun AssistantScreen(navController: NavController) {
 
     HaloAI_Android_ProductivityTheme {
         Surface(
@@ -65,10 +81,10 @@ fun CustomizeLTGoalScreen(navController: NavController, ltGoalId: String) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                ChatThreadForCustomizePlan(
+                ChatThread(
                     modifier = Modifier.fillMaxSize(),
                     model = ChatHistory(
-                        messages = conversation_ltGoal.collectAsState().value
+                        messages = conversation.collectAsState().value
                     )
                 )
             }
@@ -76,9 +92,51 @@ fun CustomizeLTGoalScreen(navController: NavController, ltGoalId: String) {
     }
 }
 
+@Composable
+fun MessageBox(message: ChatHistory.Message, modifier: Modifier) {
+    Box(
+        modifier = modifier
+            .clip(
+                RoundedCornerShape(
+                    topStart = 48f,
+                    topEnd = 48f,
+                    bottomStart = if (message.isFromMe) 48f else 0f,
+                    bottomEnd = if (message.isFromMe) 0f else 48f
+                )
+            )
+            .background(if (message.isFromMe) MaterialTheme.colorScheme.primaryContainer else
+                MaterialTheme.colorScheme.tertiaryContainer)
+            .padding(8.dp)
+    ) {
+        Text(text = message.text, color = if (message.isFromMe) MaterialTheme.colorScheme.onPrimaryContainer else
+            MaterialTheme.colorScheme.onTertiaryContainer)
+    }
+}
+
+data class ChatHistory(
+    val messages: List<Message>) {
+    data class Message(
+        val text: String,
+        val isUserMessage: Boolean,
+    ) {
+        val isFromMe: Boolean
+            get() = isUserMessage
+
+        companion object {
+            val initConv = Message(
+                text = "Hi there, how you doing?",
+                isUserMessage = false
+            )
+            val initConvResp = Message(
+                text = "I'm doing great, how about you?",
+                isUserMessage = true
+            )
+        }
+    }
+}
 
 @Composable
-fun ChatThreadForCustomizePlan(modifier: Modifier, model: ChatHistory){
+fun ChatThread(modifier: Modifier, model: ChatHistory){
     Box(modifier = modifier.fillMaxSize()) {
 
         LazyColumn {
@@ -93,12 +151,12 @@ fun ChatThreadForCustomizePlan(modifier: Modifier, model: ChatHistory){
             }
         }
 
-        InputBarForCustomizePlan_LTGoal(modifier = Modifier.align(Alignment.BottomCenter))
+        InputBar(modifier = Modifier.align(Alignment.BottomCenter))
     }
 }
 
 @Composable
-fun InputBarForCustomizePlan_LTGoal(modifier: Modifier) {
+fun InputBar(modifier: Modifier) {
     var searchState by remember { mutableStateOf(TextFieldValue("")) }
     Box(
         modifier = modifier
@@ -144,5 +202,4 @@ fun InputBarForCustomizePlan_LTGoal(modifier: Modifier) {
         }
     }
 }
-
 

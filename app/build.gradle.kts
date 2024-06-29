@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
+    id("com.google.devtools.ksp")
 }
 
 android {
@@ -45,6 +46,9 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "META-INF/INDEX.LIST"
+            excludes += "META-INF/DEPENDENCIES"
+
         }
     }
 }
@@ -74,9 +78,36 @@ dependencies {
     implementation(libs.material3)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.navigation.compose)
-    implementation(libs.guava) // For immutable list
+    // For immutable list
+    implementation(libs.guava)
     implementation(libs.androidx.constraintlayout.compose.android)
-    implementation(libs.accompanist.permissions) // For requesting
-// permissions
+    // For requesting permissions with compose (better UI)
+    implementation(libs.accompanist.permissions)
+    // For Room database
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
+
+    // Koin core features
+    implementation(libs.koin.core)
+    // Koin Android features
+    implementation(libs.koin.android)
+    // Koin AndroidX ViewModel features
+    // implementation(libs.koin.androidx.viewmodel)
+    // Koin Compose
+    implementation(libs.koin.androidx.compose)
+
+    // Gmail API
+    implementation(libs.google.api.services.gmail)
+    // Google Auth
+    implementation (libs.google.oauth.client.jetty)
+    implementation (libs.google.auth.library.oauth2.http)
+    implementation (libs.google.api.client.android)
+    implementation (libs.google.http.client.android)
+    // Google Calendar API
+    implementation (libs.google.api.services.calendar)
+    implementation(libs.play.services.auth)
+
+
 
 }

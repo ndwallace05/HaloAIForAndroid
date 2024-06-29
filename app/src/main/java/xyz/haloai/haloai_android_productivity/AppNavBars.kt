@@ -1,4 +1,4 @@
-package xyz.haloai.haloai_android_productivity
+package xyz.haloai.haloai_android_productivity.xyz.haloai.haloai_android_productivity
 
 // Main NavBars for the app
 import androidx.compose.foundation.clickable
@@ -31,33 +31,33 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
-import androidx.navigation.NavType
 import androidx.navigation.navArgument
-import xyz.haloai.haloai_android_productivity.screens.AssistantScreen
-import xyz.haloai.haloai_android_productivity.screens.CalendarScreen
-import xyz.haloai.haloai_android_productivity.screens.CustomizeLTGoalScreen
-import xyz.haloai.haloai_android_productivity.screens.HomeScreen
-import xyz.haloai.haloai_android_productivity.screens.NotesScreen
-import xyz.haloai.haloai_android_productivity.screens.PlanWithHaloScreen
-import xyz.haloai.haloai_android_productivity.screens.PlanWithHalo_Notes_Screen
-import xyz.haloai.haloai_android_productivity.screens.ProfileScreen
-import xyz.haloai.haloai_android_productivity.screens.SettingsScreen
-import xyz.haloai.haloai_android_productivity.screens.TasksScreen
-import xyz.haloai.haloai_android_productivity.xyz.haloai.haloai_android_productivity.screens.NoteDetailsScreen
+import xyz.haloai.haloai_android_productivity.R
+import xyz.haloai.haloai_android_productivity.xyz.haloai.haloai_android_productivity.data.ui.screens.AssistantScreen
+import xyz.haloai.haloai_android_productivity.xyz.haloai.haloai_android_productivity.data.ui.screens.CalendarScreen
+import xyz.haloai.haloai_android_productivity.xyz.haloai.haloai_android_productivity.data.ui.screens.CustomizeLTGoalScreen
+import xyz.haloai.haloai_android_productivity.xyz.haloai.haloai_android_productivity.data.ui.screens.HomeScreen
+import xyz.haloai.haloai_android_productivity.xyz.haloai.haloai_android_productivity.data.ui.screens.NoteDetailsScreen
+import xyz.haloai.haloai_android_productivity.xyz.haloai.haloai_android_productivity.data.ui.screens.NotesScreen
+import xyz.haloai.haloai_android_productivity.xyz.haloai.haloai_android_productivity.data.ui.screens.PlanWithHaloScreen
+import xyz.haloai.haloai_android_productivity.xyz.haloai.haloai_android_productivity.data.ui.screens.PlanWithHalo_Notes_Screen
+import xyz.haloai.haloai_android_productivity.xyz.haloai.haloai_android_productivity.data.ui.screens.ProfileScreen
+import xyz.haloai.haloai_android_productivity.xyz.haloai.haloai_android_productivity.data.ui.screens.SettingsScreen
+import xyz.haloai.haloai_android_productivity.xyz.haloai.haloai_android_productivity.data.ui.screens.TasksScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -320,7 +320,8 @@ fun NavBarsWithContent() {
                     navController = navController
                 )
             }
-            composable(Screens.NoteDetails.route,
+            composable(
+                Screens.NoteDetails.route,
                 arguments = listOf(navArgument("noteId") {
                     defaultValue = "1"
                     type = NavType.StringType // Room db id for note
@@ -329,7 +330,8 @@ fun NavBarsWithContent() {
                 val noteId = backStackEntry.arguments?.getString("noteId")
                 NoteDetailsScreen(navController = navController, noteId = noteId!!)
             }
-            composable(Screens.PlanWithHalo_NoteDetails.route,
+            composable(
+                Screens.PlanWithHalo_NoteDetails.route,
                 arguments = listOf(navArgument("noteId") {
                 defaultValue = "1"
                 type = NavType.StringType // Room db id for note
