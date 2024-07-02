@@ -4,6 +4,7 @@ import android.content.Context
 import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException
 import com.google.api.services.calendar.model.Event
 import org.koin.core.component.KoinComponent
+import xyz.haloai.haloai_android_productivity.data.local.entities.enumEventType
 import xyz.haloai.haloai_android_productivity.services.GmailService
 import xyz.haloai.haloai_android_productivity.ui.viewmodel.ScheduleDbViewModel
 import java.util.Date
@@ -58,22 +59,33 @@ class GmailRepositoryImpl(private val gmailApiService: GmailService) :
             val events = gmailApiService.getEventsFromEmail(context, emailId, calendarIds)!!
             // Clear all events for this emailId
             scheduleDbViewModel.deleteEventsNotInList(context, emailId, events.map { it.id })
+            var type: enumEventType = enumEventType.CALENDAR_EVENT
             for (event in events) {
+                type = enumEventType.CALENDAR_EVENT
                 var startTime: Date? = Date()
                 if (event.start.dateTime != null) {
                     startTime!!.time = event.start.dateTime.value // UTC Normalized time
                 }
+                else if (event.start.date != null) {
+                    startTime!!.time = event.start.date.value
+                    type = enumEventType.SCHEDULED_TASK
+                }
                 else {
-                    // Skip all-day events
                     startTime = null
+                    type = enumEventType.UNSCHEDULED_TASK
                 }
                 var endTime: Date? = Date()
                 if (event.end.dateTime != null) {
                     endTime!!.time = event.end.dateTime.value // UTC Normalized time
                 }
                 else {
-                    // Skip all-day events
-                    endTime = null
+                    endTime = startTime // If end time is not present, set it to start time, and mark it as a task.
+                    if (startTime == null) {
+                        type = enumEventType.UNSCHEDULED_TASK
+                    }
+                    else {
+                        type = enumEventType.SCHEDULED_TASK
+                    }
                 }
 
                 val nullFieldsList = mutableListOf<String>()
@@ -95,6 +107,7 @@ class GmailRepositoryImpl(private val gmailApiService: GmailService) :
 
                 scheduleDbViewModel.insertOrUpdate(
                     context = context,
+                    type = type,
                     title = event.summary,
                     description = event.description,
                     startTime = startTime,

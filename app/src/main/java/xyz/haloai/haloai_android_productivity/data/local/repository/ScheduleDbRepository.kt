@@ -50,9 +50,12 @@ class ScheduleDbRepository(private val scheduleDao: ScheduleEntriesDao): KoinCom
         return@withContext deduplicatedEvents
     }
 
-    fun getTasksBetween(start: Date, end: Date): List<ScheduleEntry>
+    suspend fun getTasksBetween(start: Date, end: Date): List<ScheduleEntry> = withContext(
+        Dispatchers.IO)
     {
-        return scheduleDao.getDbEntriesBetween(start, end, enumEventType.SCHEDULED_TASK)
+        var allTasks = scheduleDao.getDbEntriesBetween(start, end, enumEventType.SCHEDULED_TASK)
+        // Check for tasks with startDate only or endDate only that lies between the start and end date
+        return@withContext scheduleDao.getDbEntriesBetween(start, end, enumEventType.SCHEDULED_TASK)
     }
 
     fun getEventById(id: Long): ScheduleEntry
@@ -73,6 +76,41 @@ class ScheduleDbRepository(private val scheduleDao: ScheduleEntriesDao): KoinCom
             scheduleDao.markEventAsCompleted(id, false)
             scheduleDao.updateCompletionTime(id, null)
         }
+    }
+
+    fun createNewEntry(
+        title: String,
+        entryType: enumEventType? = null,
+        description: String?,
+        startTime: Date?,
+        endTime: Date?,
+        location: String?,
+        attendees: List<String>?,
+        sourceEmailId: String,
+        eventIdFromCal: String?,
+        creationTime: Date? = null
+    ): Long {
+        val currentTime = Calendar.getInstance()
+        if (creationTime != null)
+        {
+            currentTime.time = creationTime
+        }
+        var type = entryType ?: enumEventType.CALENDAR_EVENT
+        val newEvent = ScheduleEntry(
+            id = 0, // Auto-generated
+            title = title,
+            description = description,
+            startTime = startTime,
+            endTime = endTime,
+            location = location,
+            attendees = attendees,
+            sourceEmailId = sourceEmailId,
+            eventIdFromCal = eventIdFromCal,
+            timeSlotVal = null,
+            creationTime = currentTime.time,
+            type = type
+        )
+        return scheduleDao.insert(newEvent)
     }
 
     // Function to create an event from individual fields
@@ -181,6 +219,7 @@ class ScheduleDbRepository(private val scheduleDao: ScheduleEntriesDao): KoinCom
 
     suspend fun updateScheduleEntryWithOnlyGivenFields(
         id: Long,
+        entryType: enumEventType? = null,
         title: String? = null,
         description: String? = null,
         startTime: Date? = null,
@@ -206,7 +245,7 @@ class ScheduleDbRepository(private val scheduleDao: ScheduleEntriesDao): KoinCom
         var newTimeSlotVal = timeSlotVal
         var newCreationTime = creationTime
         var newCompletionTime = completionTime
-        var type: enumEventType = enumEventType.CALENDAR_EVENT
+        var type: enumEventType = entryType ?: enumEventType.CALENDAR_EVENT
 
         if (event != null) {
             newTitle = title ?: event.title
@@ -220,7 +259,7 @@ class ScheduleDbRepository(private val scheduleDao: ScheduleEntriesDao): KoinCom
             newTimeSlotVal = timeSlotVal ?: event.timeSlotVal
             newCreationTime = creationTime ?: event.creationTime
             newCompletionTime = completionTime ?: event.completionTime
-            type = event.type
+            type = entryType ?: event.type
         }
 
         if (fieldsToSetAsNull.contains("startTime"))
@@ -284,6 +323,7 @@ class ScheduleDbRepository(private val scheduleDao: ScheduleEntriesDao): KoinCom
 
     suspend fun insertOrUpdate(
         id: Long? = null,
+        entryType: enumEventType? = null,
         context: Context,
         title: String?,
         description: String?,
@@ -299,6 +339,7 @@ class ScheduleDbRepository(private val scheduleDao: ScheduleEntriesDao): KoinCom
         fieldsToSetAsNull: List<String> = emptyList(),
     ): Long
     {
+        var type = entryType ?: enumEventType.CALENDAR_EVENT
         val alarmHelper by lazy { AlarmHelper(context) }
         var exists: Boolean = false
         var eventIdToReturn = 0L
@@ -327,6 +368,7 @@ class ScheduleDbRepository(private val scheduleDao: ScheduleEntriesDao): KoinCom
             // Update the event
             updateScheduleEntryWithOnlyGivenFields(
                 id = event.id,
+                entryType = type,
                 title = title,
                 description = description,
                 startTime = startTime,
@@ -344,8 +386,9 @@ class ScheduleDbRepository(private val scheduleDao: ScheduleEntriesDao): KoinCom
         else
         {
             // Insert the event
-            eventIdToReturn = createNewEvent(
+            eventIdToReturn = createNewEntry(
                 title = title!!,
+                entryType = type,
                 description = description,
                 startTime = startTime,
                 endTime = endTime,
@@ -359,8 +402,12 @@ class ScheduleDbRepository(private val scheduleDao: ScheduleEntriesDao): KoinCom
         var newEvent = scheduleDao.getById(eventIdToReturn)
         if (exists)
         {
-            if ((startTime != event!!.startTime)) { // If the start time has changed, update the notification reminder accordingly
-                alarmHelper.updateNotificationReminder(context, newEvent, oldStartTime!!, oldEventId)
+            if (oldStartTime != null)
+            {
+                if ((startTime != event!!.startTime)) { // If the start time has changed, update the notification reminder accordingly
+                    alarmHelper.updateNotificationReminder(context, newEvent,
+                        oldStartTime, oldEventId)
+                }
             }
         }
         else
@@ -404,8 +451,13 @@ class ScheduleDbRepository(private val scheduleDao: ScheduleEntriesDao): KoinCom
                 val event = scheduleDao.getByEventIdFromCal(eventId, emailId)
                 if (event != null)
                 {
-                    // Delete the alarm for the event
-                    alarmHelper.deleteAlarmForEventReminder(event.id, event.startTime!!)
+                    if (event.startTime != null) {
+                        // Delete the alarm for the event
+                        alarmHelper.deleteAlarmForEventReminder(event.id, event.startTime!!)
+                    }
+                    else {
+                        println("Event with ID ${event.id} does not have a start time. Cannot delete alarm.")
+                    }
 
                     // Delete the event
                     scheduleDao.deleteById(event.id)
@@ -428,5 +480,19 @@ class ScheduleDbRepository(private val scheduleDao: ScheduleEntriesDao): KoinCom
             }
             gmailViewModel.updateScheduleDbForEmail(scheduleDbViewModel, context, email, listOfCalendarIds)
         }
+    }
+
+    suspend fun getSuggestedTasksForDay(context: Context, date: Date): List<ScheduleEntry> {
+        val unscheduledTasks = scheduleDao.getAllUnscheduledTasks()
+        // Make GPT call to get suggested tasks
+        val suggestedTasks = mutableListOf<ScheduleEntry>()
+        for (task in unscheduledTasks)
+        {
+            if (task.timeSlotVal != null)
+            {
+                suggestedTasks.add(task)
+            }
+        }
+        return suggestedTasks
     }
 }

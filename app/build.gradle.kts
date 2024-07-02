@@ -48,6 +48,7 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
             excludes += "META-INF/INDEX.LIST"
             excludes += "META-INF/DEPENDENCIES"
+            excludes += "META-INF/io.netty.versions.properties"
 
         }
     }
@@ -107,7 +108,13 @@ dependencies {
     // Google Calendar API
     implementation (libs.google.api.services.calendar)
     implementation(libs.play.services.auth)
-
-
+    // OpenAI API
+    implementation(libs.openai.client)
+    implementation(libs.ktor.client.android)
+    // Azure KeyVault
+    implementation(libs.azure.security.keyvault.secrets)
+    implementation(libs.azure.identity)
+    // .env file loading
+    implementation(libs.dotenv.kotlin)
 
 }

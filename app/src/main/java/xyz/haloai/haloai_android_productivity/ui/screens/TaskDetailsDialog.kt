@@ -18,10 +18,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,7 +31,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -50,14 +47,14 @@ import java.util.Date
 import java.util.Locale
 
 @Composable
-fun EventsDetailsDialog(eventId: Long, onDismissRequest: () -> Unit) {
+fun TaskDetailsDialog(taskId: Long, onDismissRequest: () -> Unit) {
     val context = LocalContext.current
     val scheduleDbViewModel: ScheduleDbViewModel = koinInject { parametersOf(context, false) }
     var coroutineScope: CoroutineScope = rememberCoroutineScope()
     var eventDbEntry: ScheduleEntry? by remember { mutableStateOf(null) }
     LaunchedEffect(Unit) {
         coroutineScope.launch {
-            eventDbEntry = scheduleDbViewModel.getEventById(eventId)
+            eventDbEntry = scheduleDbViewModel.getEventById(taskId)
         }
     }
 
@@ -156,36 +153,12 @@ fun EventsDetailsDialog(eventId: Long, onDismissRequest: () -> Unit) {
                     }
                     item {
                         EventDetailRow(
-                            icon = Icons.Default.Notifications,
-                            content = "15 minutes before"
-                        )
-                    }
-                    item {
-                        EventDetailRow(
                             icon = Icons.Default.Email,
                             content = eventDbEntry!!.sourceEmailId
                         )
                     }
-
                 }
             }
         }
-    }
-}
-
-@Composable
-fun EventDetailRow(icon: ImageVector, content: String) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Start,
-        modifier = Modifier.padding(vertical = 8.dp)
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            modifier = Modifier.size(24.dp)
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(text = content, fontSize = 16.sp)
     }
 }

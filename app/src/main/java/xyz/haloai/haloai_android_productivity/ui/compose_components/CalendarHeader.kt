@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -291,12 +290,12 @@ fun CalendarView(
                 )
             Text(
                 text = month.formatToMonthString(),
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                 modifier = Modifier.align(Alignment.Center),
             )
         }
-        Spacer(modifier = Modifier.size(10.dp))
+        // Spacer(modifier = Modifier.size(8.dp))
         if (!date.isNullOrEmpty()) {
             CalendarGrid(
                 date = date,
@@ -304,7 +303,7 @@ fun CalendarView(
                 startFromSunday = startFromSunday,
                 modifier = Modifier
                     .wrapContentHeight()
-                    .padding(horizontal = 16.dp)
+                    .padding(horizontal = 4.dp)
                     .align(Alignment.CenterHorizontally)
             )
         }

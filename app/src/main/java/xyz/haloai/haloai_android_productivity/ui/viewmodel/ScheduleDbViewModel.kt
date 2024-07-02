@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import xyz.haloai.haloai_android_productivity.data.local.entities.ScheduleEntry
+import xyz.haloai.haloai_android_productivity.data.local.entities.enumEventType
 import xyz.haloai.haloai_android_productivity.data.local.entities.enumTimeSlotForTask
 import xyz.haloai.haloai_android_productivity.data.local.repository.ScheduleDbRepository
 import java.util.Date
@@ -43,7 +44,7 @@ class ScheduleDbViewModel(private val repository: ScheduleDbRepository, context:
         return repository.getEventsBetween(start, end)
     }
 
-    fun getTasksBetween(start: Date, end: Date): List<ScheduleEntry> {
+    suspend fun getTasksBetween(start: Date, end: Date): List<ScheduleEntry> {
         return repository.getTasksBetween(start, end)
     }
 
@@ -51,8 +52,10 @@ class ScheduleDbViewModel(private val repository: ScheduleDbRepository, context:
         return@withContext repository.getEventById(id)
     }
 
-    fun updateCompletionStatus(id: Long, completionStatus: Boolean) {
-        repository.updateCompletionStatus(id, completionStatus)
+    suspend fun updateCompletionStatus(id: Long, completionStatus: Boolean) {
+        withContext(Dispatchers.IO) {
+            repository.updateCompletionStatus(id, completionStatus)
+        }
     }
 
     fun createNewEvent(
@@ -105,6 +108,7 @@ class ScheduleDbViewModel(private val repository: ScheduleDbRepository, context:
 
     suspend fun updateScheduleEntryWithOnlyGivenFields(
         id: Long,
+        type: enumEventType? = null,
         title: String? = null,
         description: String? = null,
         startTime: Date? = null,
@@ -120,6 +124,7 @@ class ScheduleDbViewModel(private val repository: ScheduleDbRepository, context:
     ): Long {
         return repository.updateScheduleEntryWithOnlyGivenFields(
             id,
+            type,
             title,
             description,
             startTime,
@@ -137,15 +142,16 @@ class ScheduleDbViewModel(private val repository: ScheduleDbRepository, context:
 
     suspend fun insertOrUpdate(
         id: Long? = null,
+        type: enumEventType? = null,
         context: Context,
-        title: String?,
-        description: String?,
-        startTime: Date?,
-        endTime: Date?,
-        location: String?,
-        attendees: List<String>?,
-        sourceEmailId: String?,
-        eventIdFromCal: String?,
+        title: String? = null,
+        description: String? = null,
+        startTime: Date? = null,
+        endTime: Date? = null,
+        location: String? = null,
+        attendees: List<String>? = null,
+        sourceEmailId: String? = null,
+        eventIdFromCal: String? = null,
         timeSlotVal: enumTimeSlotForTask? = null,
         creationTime: Date? = null,
         completionTime: Date? = null,
@@ -154,6 +160,7 @@ class ScheduleDbViewModel(private val repository: ScheduleDbRepository, context:
     withContext(Dispatchers.IO){
         return@withContext repository.insertOrUpdate(
             id,
+            type,
             context,
             title,
             description,
@@ -183,6 +190,11 @@ class ScheduleDbViewModel(private val repository: ScheduleDbRepository, context:
     suspend fun updateScheduleDb(context: Context)
     {
         repository.updateScheduleDb(this, context)
+    }
+
+    suspend fun getSuggestedTasksForDay(context: Context, date: Date): List<ScheduleEntry> =
+        withContext(Dispatchers.IO){
+        return@withContext repository.getSuggestedTasksForDay(context, date)
     }
 
 }

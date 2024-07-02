@@ -50,6 +50,9 @@ interface ScheduleEntriesDao {
     @Query("SELECT * FROM scheduleDb WHERE eventIdFromCal = :eventId AND sourceEmailId = :emailId")
     fun getByEventIdFromCal(eventId: String, emailId: String): ScheduleEntry?
 
+    @Query("SELECT * FROM scheduleDb WHERE type == :type")
+    fun getAllUnscheduledTasks(type: enumEventType = enumEventType.UNSCHEDULED_TASK): List<ScheduleEntry>
+
     @Query("UPDATE scheduleDb SET isCompleted = :isCompleted WHERE id = :id")
     fun markEventAsCompleted(id: Long, isCompleted: Boolean = true)
 

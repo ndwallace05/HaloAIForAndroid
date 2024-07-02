@@ -35,7 +35,6 @@ import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.ParentDataModifier
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -113,20 +112,20 @@ fun BasicEvent(
             .padding(4.dp)
     ) {
         Text(
+            text = event.name,
+            style = MaterialTheme.typography.bodyMedium,
+            // fontWeight = FontWeight.Thin,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+
+        Text(
             text = "${event.start.format(EventTimeFormatter)} - ${event.end.format(
                 EventTimeFormatter
             )}",
             style = MaterialTheme.typography.labelSmall,
             maxLines = 1,
             overflow = TextOverflow.Clip,
-        )
-
-        Text(
-            text = event.name,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
         )
 
         if (event.description != null) {
@@ -433,6 +432,18 @@ sealed class ScheduleSize {
     class Adaptive(val minSize: Dp) : ScheduleSize()
 }
 
+// Extension function to convert ScheduleSize to pixels
+
+private fun ScheduleSize.toPxSize(density: Density): Float {
+    return with(density) {
+        when (this@toPxSize) {
+            is ScheduleSize.FixedSize -> this@toPxSize.size.toPx()
+            is ScheduleSize.FixedCount -> 64.dp.toPx() // Default value, should be handled based on your logic
+            is ScheduleSize.Adaptive -> this@toPxSize.minSize.toPx()
+        }
+    }
+}
+
 @Composable
 fun Schedule(
     events: List<EventDataForUI>,
@@ -451,10 +462,21 @@ fun Schedule(
     val numDays = ChronoUnit.DAYS.between(minDate, maxDate).toInt() + 1
     val numMinutes = ChronoUnit.MINUTES.between(minTime, maxTime).toInt() + 1
     val numHours = numMinutes.toFloat() / 60f
-    val verticalScrollState = rememberScrollState()
+    val density = LocalDensity.current
+
+    val initialScrollPosition = if (minDate == LocalDate.now()) {
+        val now = LocalTime.now()
+        val roundedNow = now.withMinute((now.minute / 30) * 30).withSecond(0).withNano(0)
+        val minutesFromMinTime = ChronoUnit.MINUTES.between(minTime, roundedNow).toInt()
+        (minutesFromMinTime * hourSize.toPxSize(density) / 60).toInt()
+    } else {
+        (8 * hourSize.toPxSize(density)).toInt() // 8 AM
+    }
+    val verticalScrollState = rememberScrollState(initialScrollPosition)
     val horizontalScrollState = rememberScrollState()
     var sidebarWidth by remember { mutableStateOf(0) }
     var headerHeight by remember { mutableStateOf(0) }
+
     BoxWithConstraints(modifier = modifier) {
         val dayWidth: Dp = when (daySize) {
             is ScheduleSize.FixedSize -> daySize.size
@@ -467,7 +489,7 @@ fun Schedule(
             is ScheduleSize.Adaptive -> with(LocalDensity.current) { maxOf(((constraints.maxHeight - headerHeight) / numHours).toDp(), hourSize.minSize) }
         }
         Column(modifier = modifier) {
-            ScheduleHeader(
+            /*ScheduleHeader(
                 minDate = minDate,
                 maxDate = maxDate,
                 dayWidth = dayWidth,
@@ -476,7 +498,7 @@ fun Schedule(
                     .padding(start = with(LocalDensity.current) { sidebarWidth.toDp() })
                     .horizontalScroll(horizontalScrollState)
                     .onGloballyPositioned { headerHeight = it.size.height }
-            )
+            )*/
             Row(modifier = Modifier
                 .weight(1f)
                 .align(Alignment.Start)) {
