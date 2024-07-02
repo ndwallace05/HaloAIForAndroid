@@ -1,15 +1,21 @@
-package xyz.haloai.haloai_android_productivity.ui.theme
+package xyz.haloai.haloai_android_productivity.data.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import xyz.haloai.haloai_android_productivity.ui.theme.Pink40
+import xyz.haloai.haloai_android_productivity.ui.theme.Pink80
+import xyz.haloai.haloai_android_productivity.ui.theme.Purple40
+import xyz.haloai.haloai_android_productivity.ui.theme.Purple80
+import xyz.haloai.haloai_android_productivity.ui.theme.PurpleGrey40
+import xyz.haloai.haloai_android_productivity.ui.theme.PurpleGrey80
 
 private val DarkColorScheme = darkColorScheme(
     primary = Purple80,
@@ -52,7 +58,7 @@ fun HaloAI_Android_ProductivityTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = typography,
         content = content
     )
 }
