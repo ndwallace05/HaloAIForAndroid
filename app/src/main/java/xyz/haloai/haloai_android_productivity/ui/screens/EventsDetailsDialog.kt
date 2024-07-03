@@ -68,7 +68,7 @@ fun EventsDetailsDialog(eventId: Long, onDismissRequest: () -> Unit) {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(375.dp)
-                .padding(2.dp),
+                .padding(4.dp),
             shape = RoundedCornerShape(16.dp),
         ) {
             if (eventDbEntry == null) {

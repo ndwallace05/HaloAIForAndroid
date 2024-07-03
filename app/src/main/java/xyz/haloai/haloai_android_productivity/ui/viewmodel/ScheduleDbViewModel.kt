@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
@@ -24,18 +25,19 @@ class ScheduleDbViewModel(private val repository: ScheduleDbRepository, context:
 
     private val _data = mutableStateOf<String?>(null)
     val data: State<String?> get() = _data
+    val coroutineScope = viewModelScope
 
     init {
         if (refreshCalendar)
         {
-            loadData(context)
+            // var context = getKoin().get<Context>()
+            loadData(context, coroutineScope)
         }
     }
 
-    private fun loadData(context: Context) {
+    private fun loadData(context: Context, coroutineScope: CoroutineScope) {
         viewModelScope.launch {
-            updateScheduleDb(context)
-
+            updateScheduleDb(context, coroutineScope)
             _isDataLoaded.value = true
         }
     }
@@ -187,9 +189,9 @@ class ScheduleDbViewModel(private val repository: ScheduleDbRepository, context:
         repository.deleteEventsNotInList(context, emailId, eventIds)
     }
 
-    suspend fun updateScheduleDb(context: Context)
+    suspend fun updateScheduleDb(context: Context, coroutineScope: CoroutineScope, startDate: Date? = null, endDate: Date? = null)
     {
-        repository.updateScheduleDb(this, context)
+        repository.updateScheduleDb(this, context, coroutineScope, startDate, endDate)
     }
 
     suspend fun getSuggestedTasksForDay(context: Context, date: Date): List<ScheduleEntry> =
@@ -204,7 +206,7 @@ class ContentViewModelFactory(private val repository: ScheduleDbRepository, priv
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(ScheduleDbViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return ScheduleDbViewModel(repository, context) as T
+            return ScheduleDbViewModel(repository, context, false) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

@@ -21,6 +21,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -472,7 +473,11 @@ fun Schedule(
     } else {
         (8 * hourSize.toPxSize(density)).toInt() // 8 AM
     }
-    val verticalScrollState = rememberScrollState(initialScrollPosition)
+    val verticalScrollState = rememberScrollState(initialScrollPosition) // Reset if minDate changes
+    LaunchedEffect(minDate) {
+        verticalScrollState.scrollTo(initialScrollPosition)
+    }
+
     val horizontalScrollState = rememberScrollState()
     var sidebarWidth by remember { mutableStateOf(0) }
     var headerHeight by remember { mutableStateOf(0) }

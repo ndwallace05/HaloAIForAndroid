@@ -40,6 +40,10 @@ class EmailDbViewModel(private val repository: EmailDbRepository) : ViewModel() 
         }
     }
 
+    suspend fun getEmailsOfType(enumEmailType: enumEmailType): List<EmailAccount> {
+        return repository.getAccountsByType(enumEmailType)
+    }
+
     suspend fun getGoogleAccountsAdded(): List<String> {
         return repository.getAccountsByType(enumEmailType.GMAIL).map { it.email }
     }
@@ -58,11 +62,6 @@ class EmailDbViewModel(private val repository: EmailDbRepository) : ViewModel() 
         return emailList
     }
 
-    fun addGoogleAccountFromOnDeviceGoogleAccounts(context: Context, emailId: String) {
-
-
-    }
-
     fun updateCalendarIds(emailId: String, calendarIds: List<String>) = viewModelScope.launch {
         repository.updateCalendarIds(emailId, calendarIds)
     }
@@ -73,6 +72,11 @@ class EmailDbViewModel(private val repository: EmailDbRepository) : ViewModel() 
 
     fun updateIsActive(emailId: String, isActive: Boolean) = viewModelScope.launch {
         repository.updateIsActive(emailId, isActive)
+    }
+
+    suspend fun getCalendarIdsForEmail(emailId: String): List<String> {
+        val emailEntry = repository.getAccountByEmail(emailId)
+        return emailEntry.calendarIds
     }
 }
 

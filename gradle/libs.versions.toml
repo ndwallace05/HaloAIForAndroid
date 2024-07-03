@@ -23,10 +23,13 @@ ktorClientAndroid = "2.3.7"
 lifecycleRuntimeKtx = "2.8.2"
 activityCompose = "1.9.0"
 composeBom = "2024.06.00"
+microsoftGraph = "6.5.0"
+msal = "5.1.0"
 navigationCompose = "2.7.7"
 openaiClient = "3.6.3"
 playServicesAuth = "21.2.0"
 roomRuntime = "2.6.1"
+volley = "1.2.1"
 
 [libraries]
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissions" }
@@ -66,8 +69,11 @@ koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" }
 koin-androidx-compose = { module = "io.insert-koin:koin-androidx-compose", version.ref = "koin" }
 ktor-client-android = { module = "io.ktor:ktor-client-android", version.ref = "ktorClientAndroid" }
 material3 = { module = "androidx.compose.material3:material3" }
+microsoft-graph = { module = "com.microsoft.graph:microsoft-graph", version.ref = "microsoftGraph" }
+msal = { module = "com.microsoft.identity.client:msal", version.ref = "msal" }
 openai-client = { module = "com.aallam.openai:openai-client", version.ref = "openaiClient" }
 play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuth" }
+volley = { module = "com.android.volley:volley", version.ref = "volley" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

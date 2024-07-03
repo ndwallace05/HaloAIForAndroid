@@ -136,25 +136,29 @@ fun ChooseGoogleAccountsDialog(onDismissRequest: () -> Unit) {
                     }
                     else {
                         items(accounts.size) { idx ->
-                            LaunchedEffect (key1 = selectedAccounts.value[idx]) {
-                                if (selectedAccounts.value[idx])
-                                {
+                            LaunchedEffect (key1 = selectedEmailId) {
+                                if (selectedEmailId == accounts[idx]) {
                                     coroutineScope.launch {
                                         isLoading = true
-                                        selectedEmailId = accounts[idx]
                                         try {
-                                            calendarIds = gmailViewModel.getCalendarIdsForGoogleAccount(context, accounts[idx])
-                                        }
-                                        catch (e: UserRecoverableAuthIOException) {
+                                            calendarIds =
+                                                gmailViewModel.getCalendarIdsForGoogleAccount(
+                                                    context,
+                                                    accounts[idx]
+                                                )
+                                        } catch (e: UserRecoverableAuthIOException) {
                                             // User has not granted consent yet, it's a user
                                             // recoverable error
                                             requestAuthLauncher.launch(e.intent)
-                                        }
-                                        catch (e: Exception) {
+                                        } catch (e: Exception) {
                                             // Handle other exceptions (network errors, etc.)
                                             // e.printStackTrace()
                                             isLoading = false
-                                            Toast.makeText(context, "Error fetching calendar IDs", Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(
+                                                context,
+                                                "Error fetching calendar IDs",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
                                         }
                                         // calendarIds = emailDbViewModel.getCalendarIdsForGoogleAccount(context, accounts[idx])!!
                                         isCalendarIdSelected.value = calendarIds!!.map { false }
@@ -174,6 +178,7 @@ fun ChooseGoogleAccountsDialog(onDismissRequest: () -> Unit) {
                                     selectedAccounts.value = selectedAccounts.value.toMutableList().apply {
                                         this[idx] = !this[idx]
                                     }
+                                    selectedEmailId = accounts[idx]
                                 })
                             Spacer(modifier = Modifier.height(8.dp))
                         }
@@ -190,7 +195,7 @@ fun ChooseGoogleAccountsDialog(onDismissRequest: () -> Unit) {
                                 }
                         }
                         CalendarIdCard(
-                            emailId = calendarIds!![idx].second,
+                            calIdName = calendarIds!![idx].second,
                             isSelected = isCalendarIdSelected
                                 .value!![idx],
                             modifier = modifier,
@@ -222,8 +227,7 @@ fun ChooseGoogleAccountsDialog(onDismissRequest: () -> Unit) {
                                 onDismissRequest()
                              },
                             modifier = Modifier.padding(8.dp).background(MaterialTheme
-                                .colorScheme.primary),
-                            shape = RoundedCornerShape(8.dp)
+                                .colorScheme.primary, shape = RoundedCornerShape(8.dp))
                         )
                         {
                             Text("Add", color = MaterialTheme.colorScheme.onPrimary)
@@ -263,7 +267,7 @@ fun EmailIdCard(emailId: String, isAdded: Boolean, modifier: Modifier, onClick: 
 }
 
 @Composable
-fun CalendarIdCard(emailId: String, isSelected: Boolean, modifier: Modifier, onClick: () -> Unit) {
+fun CalendarIdCard(calIdName: String, isSelected: Boolean, modifier: Modifier, onClick: () -> Unit) {
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -284,7 +288,7 @@ fun CalendarIdCard(emailId: String, isSelected: Boolean, modifier: Modifier, onC
             onClick = { onClick() }
         )
         Spacer(modifier = Modifier.width(8.dp))
-        Text(emailId, modifier = Modifier.padding(1.dp), color = MaterialTheme.colorScheme
+        Text(calIdName, modifier = Modifier.padding(1.dp), color = MaterialTheme.colorScheme
             .onPrimaryContainer, fontSize = 12.sp)
     }
 }

@@ -215,7 +215,7 @@ fun CalendarScreen(navController: NavController) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(8.dp),
+                    .padding(horizontal = 8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {

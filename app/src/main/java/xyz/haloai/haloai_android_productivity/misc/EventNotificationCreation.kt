@@ -13,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import org.koin.core.parameter.parametersOf
 import xyz.haloai.haloai_android_productivity.MainActivity
 import xyz.haloai.haloai_android_productivity.R
 import xyz.haloai.haloai_android_productivity.ui.viewmodel.ScheduleDbViewModel
@@ -21,9 +22,10 @@ import java.util.Calendar
 // Receiver to create notifications for events and reminders
 class EventNotificationCreation: BroadcastReceiver(), KoinComponent {
 
-    private val scheduleDbViewModel: ScheduleDbViewModel by inject()
 
     private val scope = CoroutineScope(Dispatchers.IO) // Coroutine scope for database operations
+    private val context = getKoin().get<Context>()
+    private val scheduleDbViewModel: ScheduleDbViewModel by inject { parametersOf(context, false) }
 
     override fun onReceive(context: Context, intent: Intent) {
 

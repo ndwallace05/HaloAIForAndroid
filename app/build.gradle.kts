@@ -116,5 +116,8 @@ dependencies {
     implementation(libs.azure.identity)
     // .env file loading
     implementation(libs.dotenv.kotlin)
-
+    // Microsoft Graph API
+    implementation(libs.msal)
+    implementation(libs.volley)
+    implementation(libs.microsoft.graph)
 }
