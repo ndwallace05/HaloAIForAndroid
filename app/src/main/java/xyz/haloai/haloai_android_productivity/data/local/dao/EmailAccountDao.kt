@@ -41,4 +41,7 @@ interface EmailAccountDao {
 
     @Query("UPDATE emailDb SET isActive = :isActive WHERE email = :email")
     fun updateIsActive(email: String, isActive: Boolean)
+
+    @Query("SELECT calendarIds FROM emailDb WHERE email = :email")
+    fun getCalendarIdsForEmail(email: String): List<String>
 }

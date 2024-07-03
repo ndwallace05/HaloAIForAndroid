@@ -2,6 +2,7 @@ package xyz.haloai.haloai_android_productivity.data.local.repository
 
 import android.content.Context
 import android.text.format.DateFormat
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
@@ -9,11 +10,13 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import xyz.haloai.haloai_android_productivity.data.local.dao.ScheduleEntriesDao
 import xyz.haloai.haloai_android_productivity.data.local.entities.ScheduleEntry
+import xyz.haloai.haloai_android_productivity.data.local.entities.enumEmailType
 import xyz.haloai.haloai_android_productivity.data.local.entities.enumEventType
 import xyz.haloai.haloai_android_productivity.data.local.entities.enumTimeSlotForTask
 import xyz.haloai.haloai_android_productivity.data.ui.viewmodel.EmailDbViewModel
 import xyz.haloai.haloai_android_productivity.misc.AlarmHelper
 import xyz.haloai.haloai_android_productivity.ui.viewmodel.GmailViewModel
+import xyz.haloai.haloai_android_productivity.ui.viewmodel.MicrosoftGraphViewModel
 import xyz.haloai.haloai_android_productivity.ui.viewmodel.ScheduleDbViewModel
 import java.util.Calendar
 import java.util.Date
@@ -23,6 +26,7 @@ class ScheduleDbRepository(private val scheduleDao: ScheduleEntriesDao): KoinCom
     val allUnscheduledTasks: Flow<List<ScheduleEntry>> = scheduleDao.getAll(enumEventType.UNSCHEDULED_TASK)
     // val allScheduledTasks: Flow<List<ScheduleEntry>> = scheduleDao.getAll(enumEventType.SCHEDULED_TASK)
     private val gmailViewModel: GmailViewModel by inject()
+    private val microsoftGraphViewModel: MicrosoftGraphViewModel by inject()
     private val emailDbViewModel: EmailDbViewModel by inject()
 
     suspend fun getEventsBetween(start: Date, end: Date): List<ScheduleEntry> = withContext(
@@ -466,19 +470,23 @@ class ScheduleDbRepository(private val scheduleDao: ScheduleEntriesDao): KoinCom
         }
     }
 
-    suspend fun updateScheduleDb(scheduleDbViewModel: ScheduleDbViewModel, context: Context)
+    suspend fun updateScheduleDb(scheduleDbViewModel: ScheduleDbViewModel, context: Context,
+                                 coroutineScope: CoroutineScope, startDate: Date? = null, endDate:
+                                 Date? = null)
     {
         // Looks up emailDb, gets all emails, and updates the scheduleDb for each email
-        var allEmails = emailDbViewModel.allEmailIds()
-        for (email in allEmails)
+        val allGoogleEmails = emailDbViewModel.getEmailsOfType(enumEmailType.GMAIL)
+        for (email in allGoogleEmails)
         {
-            val calendarIds = gmailViewModel.getCalendarIdsForGoogleAccount(context, email)
-            val listOfCalendarIds = mutableListOf<String>()
-            for (calendarId in calendarIds)
-            {
-                listOfCalendarIds.add(calendarId.first)
-            }
-            gmailViewModel.updateScheduleDbForEmail(scheduleDbViewModel, context, email, listOfCalendarIds)
+            val calendarIds = emailDbViewModel.getCalendarIdsForEmail(email.email)
+            gmailViewModel.updateScheduleDbForEmail(scheduleDbViewModel, context, email.email,
+                calendarIds) // TODO: Add startDate and endDate support
+        }
+        val allMicrosoftEmails = emailDbViewModel.getEmailsOfType(enumEmailType.MICROSOFT)
+        for (email in allMicrosoftEmails)
+        {
+            microsoftGraphViewModel.updateScheduleDbForEmail(emailId = email.email, context =
+            context, coroutineScope = coroutineScope, startDate = startDate, endDate = endDate)
         }
     }
 

@@ -33,4 +33,12 @@ class EmailDbRepository(private val emailDao: EmailAccountDao) {
     suspend fun updateIsActive(emailId: String, isActive: Boolean) = withContext(Dispatchers.IO) {
         emailDao.updateIsActive(emailId, isActive)
     }
+
+    suspend fun getCalendarIdsForEmail(emailId: String): List<String> = withContext(Dispatchers.IO) {
+        return@withContext emailDao.getCalendarIdsForEmail(emailId)
+    }
+
+    suspend fun getAccountByEmail(emailId: String): EmailAccount = withContext(Dispatchers.IO) {
+        return@withContext emailDao.getAccountByEmail(emailId)
+    }
 }
