@@ -10,7 +10,9 @@ import org.koin.core.context.startKoin
 import xyz.haloai.haloai_android_productivity.di.assistantModeFunctionsModule
 import xyz.haloai.haloai_android_productivity.di.emailDbModule
 import xyz.haloai.haloai_android_productivity.di.gmailModule
+import xyz.haloai.haloai_android_productivity.di.ltGoalsDbModule
 import xyz.haloai.haloai_android_productivity.di.microsoftGraphModule
+import xyz.haloai.haloai_android_productivity.di.notesDbModule
 import xyz.haloai.haloai_android_productivity.di.openAIModule
 import xyz.haloai.haloai_android_productivity.di.scheduleDbModule
 
@@ -20,7 +22,7 @@ class HaloAI: Application()  {
         startKoin {
             androidContext(this@HaloAI)
             modules(emailDbModule, scheduleDbModule, gmailModule, openAIModule,
-                assistantModeFunctionsModule, microsoftGraphModule)
+                assistantModeFunctionsModule, microsoftGraphModule, notesDbModule, ltGoalsDbModule)
         }
 
         val dotenv = dotenv {

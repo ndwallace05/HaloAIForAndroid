@@ -169,6 +169,27 @@ class MicrosoftGraphRepositoryImplementation(private val microsoftGraphService: 
             for (j in 0 until attendees.length()) {
                 attendeeEmails.add(attendees.getJSONObject(j).getString("emailAddress"))
             }
+            /*var html = event.getString("body").replace("\n", "<br>")
+            html = html.replace("\r", "<br>")
+            html = html.replace("\t", "")*/
+
+            /*// Parse the HTML
+            val doc = Ksoup.parse(html)
+
+            val innerDoc = doc.select("<body>") // JSON object
+            val innerHtml = JSONObject(innerDoc.toString())
+            println("Inner HTML: $innerHtml")
+            val innerHTML_content = innerHtml.getString("content")
+            println("Inner HTML content: $innerHTML_content")
+            val parsedInnerHTML = Ksoup.parse(innerHTML_content)
+
+            // Get all anchor tags
+            val links = parsedInnerHTML.select("a")
+            for (link in links) {
+                val href = link.attr("href")
+                println("Link: $href")
+            }*/
+
             scheduleDbViewModel.insertOrUpdate(
                 context = context,
                 type = type,

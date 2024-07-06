@@ -8,7 +8,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import xyz.haloai.haloai_android_productivity.data.local.entities.ScheduleEntry
@@ -19,7 +18,8 @@ import java.util.Date
 
 class ScheduleDbViewModel(private val repository: ScheduleDbRepository, context: Context, refreshCalendar: Boolean = false) : ViewModel() {
 
-    val allUnscheduledTasks: Flow<List<ScheduleEntry>> = repository.allUnscheduledTasks
+    // val allUnscheduledTasks: Flow<List<ScheduleEntry>> = repository.allUnscheduledTasks
+
     private val _isDataLoaded = mutableStateOf(false)
     val isDataLoaded: State<Boolean> get() = _isDataLoaded
 
@@ -40,6 +40,10 @@ class ScheduleDbViewModel(private val repository: ScheduleDbRepository, context:
             updateScheduleDb(context, coroutineScope)
             _isDataLoaded.value = true
         }
+    }
+
+    suspend fun deleteById(id: Long) {
+        repository.deleteById(id)
     }
 
     suspend fun getEventsBetween(start: Date, end: Date): List<ScheduleEntry> {
@@ -197,6 +201,14 @@ class ScheduleDbViewModel(private val repository: ScheduleDbRepository, context:
     suspend fun getSuggestedTasksForDay(context: Context, date: Date): List<ScheduleEntry> =
         withContext(Dispatchers.IO){
         return@withContext repository.getSuggestedTasksForDay(context, date)
+    }
+
+    suspend fun getAllScheduledTasks(): List<ScheduleEntry> = withContext(Dispatchers.IO) {
+        return@withContext repository.getAllScheduledTasks()
+    }
+
+    suspend fun getAllUnscheduledTasks(): List<ScheduleEntry> = withContext(Dispatchers.IO) {
+        return@withContext repository.getAllUnscheduledTasks()
     }
 
 }

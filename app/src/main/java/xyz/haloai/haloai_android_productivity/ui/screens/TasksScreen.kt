@@ -6,8 +6,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -18,31 +20,155 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
 import xyz.haloai.haloai_android_productivity.R
 import xyz.haloai.haloai_android_productivity.data.ui.theme.HaloAI_Android_ProductivityTheme
+import xyz.haloai.haloai_android_productivity.ui.viewmodel.ScheduleDbViewModel
+import java.text.SimpleDateFormat
+import java.util.Date
 
 @Composable
 fun TasksScreen(navController: NavController) {
+    val tasks = remember { mutableStateListOf<TaskDataForUi>(
+        TaskDataForUi(
+            id = 0,
+            taskName = "Fetching...",
+            taskDescription = "...",
+            isChecked = false,
+            startDate = Date()
+        )
+    ) }
+    val context = LocalContext.current
+    val scheduleDbViewModel: ScheduleDbViewModel = koinViewModel { parametersOf(context, false) }
+    val coroutineScope = rememberCoroutineScope()
+    val dateFormatter = SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+    var showSeeMore = remember { mutableStateOf(false) }
+    val extraTasks = remember { mutableStateListOf<TaskDataForUi>() }
+
+    LaunchedEffect (Unit) {
+        coroutineScope.launch {
+            tasks.clear()
+            val allUnscheduledTasks = scheduleDbViewModel.getAllUnscheduledTasks()
+            val allScheduledTasks = scheduleDbViewModel.getAllScheduledTasks()
+            for (taskDetails in allUnscheduledTasks.subList(0, allUnscheduledTasks.size.coerceAtMost(10)))
+            {
+                tasks.add(
+                    TaskDataForUi(
+                        id = taskDetails.id,
+                        taskName = taskDetails.title,
+                        taskDescription = taskDetails.description ?: "",
+                        isChecked = taskDetails.isCompleted,
+                        startDate = null
+                    )
+                )
+            }
+
+            if (tasks.size >= 10)
+            {
+                showSeeMore.value = true
+                extraTasks.clear()
+                for (taskDetails in allUnscheduledTasks.subList(10, allUnscheduledTasks.size))
+                {
+                    extraTasks.add(
+                        TaskDataForUi(
+                            id = taskDetails.id,
+                            taskName = taskDetails.title,
+                            taskDescription = taskDetails.description ?: "",
+                            isChecked = taskDetails.isCompleted,
+                            startDate = null
+                        )
+                    )
+                }
+                for (taskDetails in allScheduledTasks)
+                {
+                    extraTasks.add(
+                        TaskDataForUi(
+                            id = taskDetails.id,
+                            taskName = taskDetails.title,
+                            taskDescription = taskDetails.description ?: "",
+                            isChecked = taskDetails.isCompleted,
+                            startDate = taskDetails.startTime
+                        )
+                    )
+                }
+            }
+
+            else {
+                val numExistingTasksToShow = tasks.size
+                for (taskDetails in allScheduledTasks.subList(0, allScheduledTasks.size.coerceAtMost(10 - numExistingTasksToShow))) {
+                    var descriptionText = taskDetails.description ?: ""
+                    if (taskDetails.startTime != null) {
+                        descriptionText =
+                            " (${dateFormatter.format(taskDetails.startTime!!)})" + descriptionText
+                    }
+                    tasks.add(
+                        TaskDataForUi(
+                            id = taskDetails.id,
+                            taskName = taskDetails.title,
+                            taskDescription = descriptionText,
+                            isChecked = taskDetails.isCompleted,
+                            startDate = taskDetails.startTime
+                        )
+                    )
+                }
+
+                if (allScheduledTasks.size > 10 - numExistingTasksToShow) {
+                    showSeeMore.value = true
+                    extraTasks.clear()
+                    for (taskDetails in allScheduledTasks.subList(10 - tasks.size, allScheduledTasks.size)) {
+                        var descriptionText = taskDetails.description ?: ""
+                        if (taskDetails.startTime != null) {
+                            descriptionText =
+                                " (${dateFormatter.format(taskDetails.startTime!!)})" + descriptionText
+                        }
+                        extraTasks.add(
+                            TaskDataForUi(
+                                id = taskDetails.id,
+                                taskName = taskDetails.title,
+                                taskDescription = descriptionText,
+                                isChecked = taskDetails.isCompleted,
+                                startDate = taskDetails.startTime
+                            )
+                        )
+                    }
+                }
+            }
+        }
+    }
+
     HaloAI_Android_ProductivityTheme {
         Surface(
             modifier = Modifier.fillMaxSize(),
@@ -57,7 +183,21 @@ fun TasksScreen(navController: NavController) {
                     verticalArrangement = Arrangement.Center
                 ) {
                     item {
-                        TaskList()
+                        TaskList(
+                            tasks = tasks,
+                            onDelete = { task ->
+                                tasks.remove(task)
+                            },
+                            showSeeMore = showSeeMore.value,
+                            onShowSeeMoreClick = {
+                                tasks.addAll(extraTasks)
+                                showSeeMore.value = false
+                            }
+                        )
+                    }
+
+                    item {
+                        Spacer(modifier = Modifier.height(72.dp))
                     }
 
                 }
@@ -69,51 +209,109 @@ fun TasksScreen(navController: NavController) {
 }
 
 @Composable
-fun TaskList() {
+fun TaskList(tasks: List<TaskDataForUi>, onDelete: (TaskDataForUi) -> Unit = {}, showSeeMore: Boolean = false, onShowSeeMoreClick: () -> Unit = {}) {
     Column {
-        repeat(12) {
-            TaskItem(taskName = "Sample Task 1", taskDescription = "Sample Description 1")
+        for(task in tasks) {
+            TaskItem(task = task, onDelete = onDelete)
+        }
+        if (showSeeMore) {
+            Button(
+                modifier = Modifier.padding(8.dp).align(Alignment.CenterHorizontally),
+                colors = ButtonColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    disabledContentColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.5f),
+                    disabledContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)),
+                onClick = {
+                    // Add extra tasks to the list
+                    onShowSeeMoreClick()
+                })
+            {
+                Text("See more...", fontSize = 16.sp, color = MaterialTheme.colorScheme.onPrimaryContainer,)
+            }
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TaskItem(taskName: String, taskDescription: String) {
+fun TaskItem(task: TaskDataForUi, onDelete: (TaskDataForUi) -> Unit = {}) {
     var isChecked by remember { mutableStateOf(false) }
+    val scheduleDbViewModel: ScheduleDbViewModel = koinViewModel()
+    val coroutineScope = rememberCoroutineScope()
+    var showDatePicker by remember { mutableStateOf(false) }
+    val datePickerState = rememberDatePickerState(initialSelectedDateMillis = task.startDate?.time ?: System.currentTimeMillis())
+
+    if (showDatePicker) {
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDatePicker = false
+                    val selectedDateMillis = datePickerState.selectedDateMillis ?: return@TextButton
+                    coroutineScope.launch {
+                        scheduleDbViewModel.updateScheduleEntryWithOnlyGivenFields(
+                            startTime = Date(selectedDateMillis),
+                            id = task.id
+                        )
+                    }
+                }) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text("Cancel")
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
 
     Row(
         modifier = Modifier
             .padding(8.dp)
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(MaterialTheme.colorScheme.primaryContainer)
-            .padding(16.dp),
+            .background(MaterialTheme.colorScheme.primaryContainer),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Row {
+        Row (modifier = Modifier.weight(1f)){
             Checkbox(
                 checked = isChecked,
                 onCheckedChange = { isChecked = it }
             )
         }
-        Column (modifier = Modifier.weight(3f)) {
+        Column (modifier = Modifier.weight(4f)) {
             Text(
-                text = taskName,
+                text = task.taskName,
                 fontSize = 16.sp,
                 textDecoration = if (isChecked) TextDecoration.LineThrough else TextDecoration.None
             )
+            // Max 2 lines for description
             Text(
-                text = taskDescription,
+                text = task.taskDescription,
+                maxLines = 2,
                 fontSize = 12.sp,
                 textDecoration = if (isChecked) TextDecoration.LineThrough else TextDecoration.None
             )
         }
-        Row {
-            IconButton(onClick = { /* Handle schedule click */ }) {
+        Row (modifier = Modifier.weight(2f)) {
+            IconButton(onClick = {
+                // Show a dialog to select date
+                showDatePicker = true
+            }) {
                 Icon(Icons.Filled.DateRange, contentDescription = "Schedule")
             }
-            IconButton(onClick = { /* Handle delete click */ }) {
+            IconButton(onClick = {
+                /* Handle delete click */
+                coroutineScope.launch {
+                    scheduleDbViewModel.deleteById(task.id)
+                    onDelete(task)
+                }
+            }) {
                 Icon(Icons.Filled.Delete, contentDescription = "Delete")
             }
         }
@@ -173,4 +371,12 @@ fun SearchBarForTasks(modifier: Modifier) {
         }
     }
 }
+
+data class TaskDataForUi(
+    val id: Long,
+    val taskName: String,
+    val taskDescription: String,
+    val isChecked: Boolean,
+    val startDate: Date?
+)
 

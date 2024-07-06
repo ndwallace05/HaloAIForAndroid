@@ -3,7 +3,6 @@ package xyz.haloai.haloai_android_productivity.data.local.dao
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
-import kotlinx.coroutines.flow.Flow
 import xyz.haloai.haloai_android_productivity.data.local.entities.ScheduleEntry
 import xyz.haloai.haloai_android_productivity.data.local.entities.enumEventType
 import xyz.haloai.haloai_android_productivity.data.local.entities.enumTimeSlotForTask
@@ -15,7 +14,7 @@ interface ScheduleEntriesDao {
     fun insert(calEvent: ScheduleEntry): Long
 
     @Query("SELECT * FROM scheduleDb WHERE type == :type ORDER BY startTime ASC")
-    fun getAll(type: enumEventType): Flow<List<ScheduleEntry>>
+    fun getAll(type: enumEventType): List<ScheduleEntry>
 
     @Query("SELECT * FROM scheduleDb WHERE id = :id")
     fun getById(id: Long): ScheduleEntry

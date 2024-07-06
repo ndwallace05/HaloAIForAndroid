@@ -4,7 +4,6 @@ import android.content.Context
 import android.text.format.DateFormat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -23,7 +22,7 @@ import java.util.Date
 
 class ScheduleDbRepository(private val scheduleDao: ScheduleEntriesDao): KoinComponent {
     // val allEvents: Flow<List<ScheduleEntry>> = scheduleDao.getAll(enumEventType.CALENDAR_EVENT)
-    val allUnscheduledTasks: Flow<List<ScheduleEntry>> = scheduleDao.getAll(enumEventType.UNSCHEDULED_TASK)
+    // val allUnscheduledTasks: Flow<List<ScheduleEntry>> = scheduleDao.getAll(enumEventType.UNSCHEDULED_TASK)
     // val allScheduledTasks: Flow<List<ScheduleEntry>> = scheduleDao.getAll(enumEventType.SCHEDULED_TASK)
     private val gmailViewModel: GmailViewModel by inject()
     private val microsoftGraphViewModel: MicrosoftGraphViewModel by inject()
@@ -52,6 +51,12 @@ class ScheduleDbRepository(private val scheduleDao: ScheduleEntriesDao): KoinCom
         // Sort by start time, account for the time zone
         deduplicatedEvents.sortBy { it.startTime }
         return@withContext deduplicatedEvents
+    }
+
+    suspend fun deleteById(id: Long) {
+        withContext(Dispatchers.IO) {
+            scheduleDao.deleteById(id)
+        }
     }
 
     suspend fun getTasksBetween(start: Date, end: Date): List<ScheduleEntry> = withContext(
@@ -237,92 +242,84 @@ class ScheduleDbRepository(private val scheduleDao: ScheduleEntriesDao): KoinCom
         completionTime: Date? = null,
         fieldsToSetAsNull: List<String> = emptyList() // List of fields to set to null
     ): Long {
-        val event = scheduleDao.getById(id)
-        var newTitle = title ?: ""
-        var newDescription = description
-        var newStartTime = startTime
-        var newEndTime = endTime
-        var newLocation = location
-        var newAttendees = attendees
-        var newSourceEmailId = sourceEmailId ?: ""
-        var newEventIdFromCal = eventIdFromCal
-        var newTimeSlotVal = timeSlotVal
-        var newCreationTime = creationTime
-        var newCompletionTime = completionTime
-        var type: enumEventType = entryType ?: enumEventType.CALENDAR_EVENT
+        return withContext(Dispatchers.IO) {
+            val event = scheduleDao.getById(id)
+            var newTitle = title ?: ""
+            var newDescription = description
+            var newStartTime = startTime
+            var newEndTime = endTime
+            var newLocation = location
+            var newAttendees = attendees
+            var newSourceEmailId = sourceEmailId ?: ""
+            var newEventIdFromCal = eventIdFromCal
+            var newTimeSlotVal = timeSlotVal
+            var newCreationTime = creationTime
+            var newCompletionTime = completionTime
+            var type: enumEventType = entryType ?: enumEventType.CALENDAR_EVENT
 
-        if (event != null) {
-            newTitle = title ?: event.title
-            newDescription = description ?: event.description
-            newStartTime = startTime ?: event.startTime
-            newEndTime = endTime ?: event.endTime
-            newLocation = location ?: event.location
-            newAttendees = attendees ?: event.attendees
-            newSourceEmailId = sourceEmailId ?: event.sourceEmailId
-            newEventIdFromCal = eventIdFromCal ?: event.eventIdFromCal
-            newTimeSlotVal = timeSlotVal ?: event.timeSlotVal
-            newCreationTime = creationTime ?: event.creationTime
-            newCompletionTime = completionTime ?: event.completionTime
-            type = entryType ?: event.type
-        }
+            if (event != null) {
+                newTitle = title ?: event.title
+                newDescription = description ?: event.description
+                newStartTime = startTime ?: event.startTime
+                newEndTime = endTime ?: event.endTime
+                newLocation = location ?: event.location
+                newAttendees = attendees ?: event.attendees
+                newSourceEmailId = sourceEmailId ?: event.sourceEmailId
+                newEventIdFromCal = eventIdFromCal ?: event.eventIdFromCal
+                newTimeSlotVal = timeSlotVal ?: event.timeSlotVal
+                newCreationTime = creationTime ?: event.creationTime
+                newCompletionTime = completionTime ?: event.completionTime
+                type = entryType ?: event.type
+            }
 
-        if (fieldsToSetAsNull.contains("startTime"))
-        {
-            newStartTime = null
-        }
-        if (fieldsToSetAsNull.contains("endTime"))
-        {
-            newEndTime = null
-        }
-        if (fieldsToSetAsNull.contains("location"))
-        {
-            newLocation = null
-        }
-        if (fieldsToSetAsNull.contains("attendees"))
-        {
-            newAttendees = null
-        }
-        if (fieldsToSetAsNull.contains("sourceEmailId"))
-        {
-            newSourceEmailId = ""
-        }
-        if (fieldsToSetAsNull.contains("eventIdFromCal"))
-        {
-            newEventIdFromCal = null
-        }
-        if (fieldsToSetAsNull.contains("timeSlotVal"))
-        {
-            newTimeSlotVal = null
-        }
-        if (fieldsToSetAsNull.contains("creationTime"))
-        {
-            newCreationTime = null
-        }
-        if (fieldsToSetAsNull.contains("completionTime"))
-        {
-            newCompletionTime = null
-        }
+            if (fieldsToSetAsNull.contains("startTime")) {
+                newStartTime = null
+            }
+            if (fieldsToSetAsNull.contains("endTime")) {
+                newEndTime = null
+            }
+            if (fieldsToSetAsNull.contains("location")) {
+                newLocation = null
+            }
+            if (fieldsToSetAsNull.contains("attendees")) {
+                newAttendees = null
+            }
+            if (fieldsToSetAsNull.contains("sourceEmailId")) {
+                newSourceEmailId = ""
+            }
+            if (fieldsToSetAsNull.contains("eventIdFromCal")) {
+                newEventIdFromCal = null
+            }
+            if (fieldsToSetAsNull.contains("timeSlotVal")) {
+                newTimeSlotVal = null
+            }
+            if (fieldsToSetAsNull.contains("creationTime")) {
+                newCreationTime = null
+            }
+            if (fieldsToSetAsNull.contains("completionTime")) {
+                newCompletionTime = null
+            }
 
-        val newEvent = ScheduleEntry(
-            id = id,
-            title = newTitle,
-            description = newDescription,
-            startTime = newStartTime,
-            endTime = newEndTime,
-            location = newLocation,
-            attendees = newAttendees,
-            sourceEmailId = newSourceEmailId,
-            eventIdFromCal = newEventIdFromCal,
-            timeSlotVal = newTimeSlotVal,
-            creationTime = newCreationTime,
-            completionTime = newCompletionTime,
-            type = type
-        )
-        // Delete the old event
-        scheduleDao.deleteById(id)
-        // delay(100)
-        return scheduleDao.insert(newEvent)
-
+            val newEvent = ScheduleEntry(
+                id = id,
+                title = newTitle,
+                description = newDescription,
+                startTime = newStartTime,
+                endTime = newEndTime,
+                location = newLocation,
+                attendees = newAttendees,
+                sourceEmailId = newSourceEmailId,
+                eventIdFromCal = newEventIdFromCal,
+                timeSlotVal = newTimeSlotVal,
+                creationTime = newCreationTime,
+                completionTime = newCompletionTime,
+                type = type
+            )
+            // Delete the old event
+            scheduleDao.deleteById(id)
+            // delay(100)
+            return@withContext scheduleDao.insert(newEvent)
+        }
     }
 
     suspend fun insertOrUpdate(
@@ -502,5 +499,13 @@ class ScheduleDbRepository(private val scheduleDao: ScheduleEntriesDao): KoinCom
             }
         }
         return suggestedTasks
+    }
+
+    suspend fun getAllScheduledTasks(): List<ScheduleEntry> = withContext(Dispatchers.IO) {
+        return@withContext scheduleDao.getAll(enumEventType.SCHEDULED_TASK)
+    }
+
+    suspend fun getAllUnscheduledTasks(): List<ScheduleEntry> = withContext(Dispatchers.IO) {
+        return@withContext scheduleDao.getAll(enumEventType.UNSCHEDULED_TASK)
     }
 }

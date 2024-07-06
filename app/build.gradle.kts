@@ -120,4 +120,6 @@ dependencies {
     implementation(libs.msal)
     implementation(libs.volley)
     implementation(libs.microsoft.graph)
+    // Json parsing
+    implementation(libs.ksoup)
 }

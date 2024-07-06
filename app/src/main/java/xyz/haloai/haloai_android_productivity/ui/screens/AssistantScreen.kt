@@ -113,24 +113,24 @@ fun AssistantScreen(navController: NavController) {
 }
 
 @Composable
-fun MessageBox(message: ChatHistory.Message, modifier: Modifier) {
+fun MessageBox(text: String, isFromMe: Boolean, modifier: Modifier) {
     Box(
         modifier = modifier
             .clip(
                 RoundedCornerShape(
                     topStart = 48f,
                     topEnd = 48f,
-                    bottomStart = if (message.isFromMe) 48f else 0f,
-                    bottomEnd = if (message.isFromMe) 0f else 48f
+                    bottomStart = if (isFromMe) 48f else 0f,
+                    bottomEnd = if (isFromMe) 0f else 48f
                 )
             )
             .background(
-                if (message.isFromMe) MaterialTheme.colorScheme.primaryContainer else
+                if (isFromMe) MaterialTheme.colorScheme.primaryContainer else
                     MaterialTheme.colorScheme.tertiaryContainer
             )
             .padding(8.dp)
     ) {
-        Text(text = message.text, color = if (message.isFromMe) MaterialTheme.colorScheme.onPrimaryContainer else
+        Text(text = text, color = if (isFromMe) MaterialTheme.colorScheme.onPrimaryContainer else
             MaterialTheme.colorScheme.onTertiaryContainer)
     }
 }
@@ -167,9 +167,9 @@ fun ChatThread(modifier: Modifier, model: ChatHistory, onUserInput: (String) -> 
                     .fillMaxWidth()
                     .padding(8.dp)) {
                     if (item.isUserMessage)
-                        MessageBox(item, modifier = Modifier.align(Alignment.CenterEnd))
+                        MessageBox(item.text, item.isUserMessage, modifier = Modifier.align(Alignment.CenterEnd))
                     else
-                        MessageBox(item, modifier = Modifier.align(Alignment.CenterStart))
+                        MessageBox(item.text, item.isUserMessage, modifier = Modifier.align(Alignment.CenterStart))
                     // MessageBox(item)
                 }
             }

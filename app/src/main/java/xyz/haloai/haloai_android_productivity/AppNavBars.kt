@@ -235,11 +235,14 @@ fun NavBarsWithContent() {
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            TopBarForApp(currentScreenTitle,
-                navigateToPreviousScreen = {
-                navController.popBackStack()
-            },
-                navController = navController)
+            TopBarForApp(
+                currentScreenTitle,
+                navigateToPreviousScreen =
+                {
+                    navController.popBackStack()
+                },
+                navController = navController
+            )
         },
         bottomBar = {
             NavigationBar {
