@@ -8,6 +8,8 @@ interface OpenAIRepository {
     suspend fun getChatGPTResponse(initialPromptText: String, promptText: String,
                                    modelToUse: String = "gpt-3.5-turbo-1106", temperature: Double = 0.0): String
 
+    suspend fun generateImageFromPrompt(promptText: String, modelToUse: String = "dall-e-3"): String
+
 }
 
 
@@ -17,5 +19,9 @@ class OpenAIRepositoryImpl(private val openAIService: OpenAIService) :
     override suspend fun getChatGPTResponse(initialPromptText: String, promptText: String,
                                            modelToUse: String, temperature: Double): String {
         return openAIService.getChatGPTResponse(initialPromptText, promptText, modelToUse, temperature)
+    }
+
+    override suspend fun generateImageFromPrompt(promptText: String, modelToUse: String): String {
+        return openAIService.generateImageFromPrompt(promptText, modelToUse)
     }
 }

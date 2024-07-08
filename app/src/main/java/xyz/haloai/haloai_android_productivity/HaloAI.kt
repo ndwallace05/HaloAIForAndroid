@@ -14,6 +14,8 @@ import xyz.haloai.haloai_android_productivity.di.ltGoalsDbModule
 import xyz.haloai.haloai_android_productivity.di.microsoftGraphModule
 import xyz.haloai.haloai_android_productivity.di.notesDbModule
 import xyz.haloai.haloai_android_productivity.di.openAIModule
+import xyz.haloai.haloai_android_productivity.di.productivityFeedModule
+import xyz.haloai.haloai_android_productivity.di.productivityFeedOptionsModule
 import xyz.haloai.haloai_android_productivity.di.scheduleDbModule
 
 class HaloAI: Application()  {
@@ -22,8 +24,10 @@ class HaloAI: Application()  {
         startKoin {
             androidContext(this@HaloAI)
             modules(emailDbModule, scheduleDbModule, gmailModule, openAIModule,
-                assistantModeFunctionsModule, microsoftGraphModule, notesDbModule, ltGoalsDbModule)
+                assistantModeFunctionsModule, microsoftGraphModule, notesDbModule, ltGoalsDbModule, productivityFeedModule, productivityFeedOptionsModule)
         }
+
+        // Get Azure and openAI keys from Azure Key Vault
 
         val dotenv = dotenv {
             directory = "/assets"

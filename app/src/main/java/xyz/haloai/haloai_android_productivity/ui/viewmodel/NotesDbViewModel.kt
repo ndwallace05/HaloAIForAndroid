@@ -34,4 +34,8 @@ class NotesDbViewModel(private val repository: NotesDbRepository) : ViewModel() 
         repository.appendContentToNoteById(id, content)
     }
 
+    suspend fun addToSomeNote(content: String, extraInfo: String? = null) {
+        repository.addToSomeNote(content, extraInfo)
+    }
+
 }

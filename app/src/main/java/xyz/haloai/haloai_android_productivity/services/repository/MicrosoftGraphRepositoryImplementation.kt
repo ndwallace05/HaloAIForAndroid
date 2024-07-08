@@ -73,17 +73,17 @@ class MicrosoftGraphRepositoryImplementation(private val microsoftGraphService: 
         }
     }
 
-    suspend fun authenticateMicrosoftAccountToFetchCalendarIds(context: Context, coroutineScope: CoroutineScope) {
+    private suspend fun authenticateMicrosoftAccountToFetchCalendarIds(context: Context, coroutineScope: CoroutineScope) {
         microsoftGraphService.addMicrosoftAccount(context, this::getCalendarIdsCallback, coroutineScope)
     }
 
-    suspend fun authenticateMicrosoftAccountToFetchEvents(context: Context, coroutineScope:
+    private suspend fun authenticateMicrosoftAccountToFetchEvents(context: Context, coroutineScope:
     CoroutineScope, emailId: String, startDate: Date?, endDate: Date?) {
         microsoftGraphService.authenticateAccountForEventsFetch(context, emailId, this::getEventsCallback,
             coroutineScope, startDate, endDate)
     }
 
-    suspend fun getCalendarIdsCallback(result: Result<IAuthenticationResult>) {
+    private suspend fun getCalendarIdsCallback(result: Result<IAuthenticationResult>) {
         // Handle the result
         if (result.isSuccess) {
             // Get the calendar IDs
@@ -98,7 +98,7 @@ class MicrosoftGraphRepositoryImplementation(private val microsoftGraphService: 
         }
     }
 
-    suspend fun getEventsFromEmail(emailId: String, context: Context, coroutineScope:
+    private suspend fun getEventsFromEmail(emailId: String, context: Context, coroutineScope:
     CoroutineScope, startDate: Date?, endDate: Date?): JSONObject  {
         return suspendCancellableCoroutine<JSONObject> { continuation ->
             // Authenticate user, then get calendar IDs

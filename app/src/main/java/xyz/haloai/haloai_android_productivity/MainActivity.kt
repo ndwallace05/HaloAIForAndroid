@@ -13,15 +13,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import xyz.haloai.haloai_android_productivity.data.ui.theme.HaloAI_Android_ProductivityTheme
 import xyz.haloai.haloai_android_productivity.xyz.haloai.haloai_android_productivity.NavBarsWithContent
+import xyz.haloai.haloai_android_productivity.xyz.haloai.haloai_android_productivity.Screens
 
-class MainActivity : ComponentActivity() {
+class MainActivity() : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        var defaultDestination: Screens = Screens.Home
+        val destinationFromIntent = intent.getStringExtra("defaultDestination")
+        if (destinationFromIntent != null) {
+            if (destinationFromIntent == "Screens.Assistant") {
+                defaultDestination = Screens.Assistant
+            }
+        }
+
         enableEdgeToEdge()
         setContent {
             HaloAI_Android_ProductivityTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    NavBarsWithContent()
+                    NavBarsWithContent(defaultDestination)
                 }
             }
         }

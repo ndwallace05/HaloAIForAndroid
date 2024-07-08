@@ -7,6 +7,7 @@ import org.koin.core.component.KoinComponent
 import xyz.haloai.haloai_android_productivity.data.local.entities.enumEventType
 import xyz.haloai.haloai_android_productivity.services.GmailService
 import xyz.haloai.haloai_android_productivity.ui.viewmodel.ScheduleDbViewModel
+import java.util.Calendar
 import java.util.Date
 
 interface GmailRepository {
@@ -68,6 +69,8 @@ class GmailRepositoryImpl(private val gmailApiService: GmailService) :
                 }
                 else if (event.start.date != null) {
                     startTime!!.time = event.start.date.value
+                    // Offset by timezone to get the correct time
+                    startTime.time -= Calendar.getInstance().timeZone.rawOffset
                     type = enumEventType.SCHEDULED_TASK
                 }
                 else {

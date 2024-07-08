@@ -2,6 +2,7 @@ package xyz.haloai.haloai_android_productivity.xyz.haloai.haloai_android_product
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -56,6 +57,7 @@ import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 import xyz.haloai.haloai_android_productivity.R
 import xyz.haloai.haloai_android_productivity.data.ui.theme.HaloAI_Android_ProductivityTheme
+import xyz.haloai.haloai_android_productivity.ui.screens.TaskDetailsDialog
 import xyz.haloai.haloai_android_productivity.ui.viewmodel.ScheduleDbViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -77,6 +79,7 @@ fun TasksScreen(navController: NavController) {
     val dateFormatter = SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
     var showSeeMore = remember { mutableStateOf(false) }
     val extraTasks = remember { mutableStateListOf<TaskDataForUi>() }
+    var selectedTaskId = remember { mutableStateOf<Long?>(null) }
 
     LaunchedEffect (Unit) {
         coroutineScope.launch {
@@ -191,7 +194,11 @@ fun TasksScreen(navController: NavController) {
                             showSeeMore = showSeeMore.value,
                             onShowSeeMoreClick = {
                                 tasks.addAll(extraTasks)
+                                extraTasks.clear()
                                 showSeeMore.value = false
+                            },
+                            onClick = {
+                                selectedTaskId.value = it
                             }
                         )
                     }
@@ -204,19 +211,31 @@ fun TasksScreen(navController: NavController) {
 
                 SearchBarForTasks(modifier = Modifier.align(Alignment.BottomCenter))
             }
+
+            if (selectedTaskId.value != null) {
+                TaskDetailsDialog(
+                    taskId = selectedTaskId.value!!,
+                    onDismissRequest =
+                    {
+                        selectedTaskId.value = null
+                    }
+                )
+            }
         }
     }
 }
 
 @Composable
-fun TaskList(tasks: List<TaskDataForUi>, onDelete: (TaskDataForUi) -> Unit = {}, showSeeMore: Boolean = false, onShowSeeMoreClick: () -> Unit = {}) {
+fun TaskList(tasks: List<TaskDataForUi>, onDelete: (TaskDataForUi) -> Unit = {}, showSeeMore: Boolean = false, onShowSeeMoreClick: () -> Unit = {}, onClick: (Long) -> Unit) {
     Column {
         for(task in tasks) {
-            TaskItem(task = task, onDelete = onDelete)
+            TaskItem(task = task, onDelete = onDelete, modifier = Modifier.clickable { onClick(task.id) })
         }
         if (showSeeMore) {
             Button(
-                modifier = Modifier.padding(8.dp).align(Alignment.CenterHorizontally),
+                modifier = Modifier
+                    .padding(8.dp)
+                    .align(Alignment.CenterHorizontally),
                 colors = ButtonColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -235,7 +254,7 @@ fun TaskList(tasks: List<TaskDataForUi>, onDelete: (TaskDataForUi) -> Unit = {},
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TaskItem(task: TaskDataForUi, onDelete: (TaskDataForUi) -> Unit = {}) {
+fun TaskItem(task: TaskDataForUi, onDelete: (TaskDataForUi) -> Unit = {}, modifier: Modifier) {
     var isChecked by remember { mutableStateOf(false) }
     val scheduleDbViewModel: ScheduleDbViewModel = koinViewModel()
     val coroutineScope = rememberCoroutineScope()
@@ -270,7 +289,7 @@ fun TaskItem(task: TaskDataForUi, onDelete: (TaskDataForUi) -> Unit = {}) {
     }
 
     Row(
-        modifier = Modifier
+        modifier = modifier
             .padding(8.dp)
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))

@@ -105,6 +105,14 @@ class ScheduleDbRepository(private val scheduleDao: ScheduleEntriesDao): KoinCom
             currentTime.time = creationTime
         }
         var type = entryType ?: enumEventType.CALENDAR_EVENT
+        if (endTime == null)
+        {
+            type = if (startTime == null) {
+                enumEventType.UNSCHEDULED_TASK
+            } else {
+                enumEventType.SCHEDULED_TASK
+            }
+        }
         val newEvent = ScheduleEntry(
             id = 0, // Auto-generated
             title = title,

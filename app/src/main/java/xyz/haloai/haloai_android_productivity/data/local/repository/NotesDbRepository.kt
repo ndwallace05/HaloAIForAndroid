@@ -62,4 +62,24 @@ class NotesDbRepository(private val noteDao: NoteDao): KoinComponent {
         val contextText = "Title: $title\nContent: $content\n\n"
         return@withContext openAIViewModel.getChatGPTResponse(promptText, contextText)
     }
+
+    suspend fun addToSomeNote(content: String, extraInfo: String?) = withContext(Dispatchers.IO) {
+        val allNotes = getAllNotes()
+        val promptText = "You are a helpful assistant. Given a list of notes the user has (alongwith their summaries), and a some content they want to add, reply with the index of the note this best fits in. Reply only with the index, and no other text. Reply with -1 if the content should be added as a new note."
+        var contextText = "Notes:\n"
+        // Index. Note Title: Note Summary and so on...
+        contextText += allNotes.mapIndexed { index, note -> "${index + 1}. ${note.title}: ${note.summary}" }.joinToString("\n")
+        contextText += "\n\nContent to add: $content\n"
+        if (extraInfo != null) {
+            contextText += "Extra Info: $extraInfo\n"
+        }
+        val response = openAIViewModel.getChatGPTResponse(promptText, contextText)
+        val noteIndex = response.trim().toInt()
+        if (noteIndex == -1) {
+            insert("New Note", content)
+        } else {
+            val noteId = allNotes[noteIndex - 1].id
+            appendContentToNoteById(noteId, "\n" + content + "\n")
+        }
+    }
 }

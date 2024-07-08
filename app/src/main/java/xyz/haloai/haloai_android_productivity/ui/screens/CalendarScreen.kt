@@ -85,7 +85,7 @@ fun CalendarScreen(navController: NavController) {
     val scheduleDbViewModel: ScheduleDbViewModel = koinViewModel { parametersOf(context, true) } //
     // Refresh the view model
     val listOfEventsToDisplay = remember { mutableStateListOf<EventDataForUI>() }
-    val listOfConfirmedTasks = remember { mutableStateListOf<TaskDataForUI>() }
+    val listOfConfirmedTasks = remember { mutableStateListOf<TaskDataForCalendarUI>() }
     var selectedEventId: Long? by remember {
         mutableStateOf(null)
     }
@@ -106,7 +106,7 @@ fun CalendarScreen(navController: NavController) {
         selectedTaskId = null
     }
     var suggestedTasks = remember {
-        mutableStateListOf<TaskDataForUI>()
+        mutableStateListOf<TaskDataForCalendarUI>()
     }
     val onSuggestedTaskAddClick: (Long) -> Unit = { taskId ->
         // Change type of task to SCHEUDLED_TASK, and set date to selected date
@@ -188,7 +188,7 @@ fun CalendarScreen(navController: NavController) {
                 var startAsLocalDateTime = it.startTime!!.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
                 var endAsLocalDateTime = it.endTime!!.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
                 listOfConfirmedTasks.add(
-                    TaskDataForUI(
+                    TaskDataForCalendarUI(
                     taskName = it.title,
                     taskDescription = if (it.description != null) it.description!! else "",
                     isChecked = it.isCompleted,
@@ -382,7 +382,7 @@ fun CalendarScreen(navController: NavController) {
 
 @Composable
 fun TaskListForCalendar(coroutineScope: CoroutineScope, scheduleDbViewModel: ScheduleDbViewModel,
-                        confirmedTasks : List<TaskDataForUI>, onClick: (Long) -> Unit = {},
+                        confirmedTasks : List<TaskDataForCalendarUI>, onClick: (Long) -> Unit = {},
                         onSuggestedTaskAddClick: (Long) -> Unit = {}) {
     val isCheckedStateForConfirmedTasks = remember { mutableStateListOf<Boolean>() }
     for (task in confirmedTasks) {
@@ -427,7 +427,7 @@ fun TaskListForCalendar(coroutineScope: CoroutineScope, scheduleDbViewModel: Sch
         // Spacer(modifier = Modifier.height(4.dp))
 
         SuggestedTask(
-            task = TaskDataForUI(
+            task = TaskDataForCalendarUI(
                 taskName = "Suggested Task 1",
                 taskDescription = "This is a suggested task",
                 isChecked = false,
@@ -442,7 +442,7 @@ fun TaskListForCalendar(coroutineScope: CoroutineScope, scheduleDbViewModel: Sch
 }
 
 @Composable
-fun ConfirmedTask(task: TaskDataForUI, checked: Boolean, onCheckedChange: (Boolean) -> Unit,
+fun ConfirmedTask(task: TaskDataForCalendarUI, checked: Boolean, onCheckedChange: (Boolean) -> Unit,
                   onClick: (Long) -> Unit) {
     val backgroundColor = if (checked) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f) else MaterialTheme.colorScheme.primaryContainer
 
@@ -490,7 +490,7 @@ fun ConfirmedTask(task: TaskDataForUI, checked: Boolean, onCheckedChange: (Boole
 }
 
 @Composable
-fun SuggestedTask(task: TaskDataForUI, onClick: (Long) -> Unit, onAddClick: (Long) -> Unit = {}) {
+fun SuggestedTask(task: TaskDataForCalendarUI, onClick: (Long) -> Unit, onAddClick: (Long) -> Unit = {}) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
@@ -551,7 +551,7 @@ fun Float.toPx(): Float {
     return with(density) { this@toPx.toDp().toPx() }
 }
 
-data class TaskDataForUI(
+data class TaskDataForCalendarUI(
     val taskName: String,
     val taskDescription: String,
     var isChecked: Boolean,
