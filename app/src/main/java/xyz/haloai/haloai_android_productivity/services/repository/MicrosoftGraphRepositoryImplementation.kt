@@ -73,17 +73,17 @@ class MicrosoftGraphRepositoryImplementation(private val microsoftGraphService: 
         }
     }
 
-    suspend fun authenticateMicrosoftAccountToFetchCalendarIds(context: Context, coroutineScope: CoroutineScope) {
+    private suspend fun authenticateMicrosoftAccountToFetchCalendarIds(context: Context, coroutineScope: CoroutineScope) {
         microsoftGraphService.addMicrosoftAccount(context, this::getCalendarIdsCallback, coroutineScope)
     }
 
-    suspend fun authenticateMicrosoftAccountToFetchEvents(context: Context, coroutineScope:
+    private suspend fun authenticateMicrosoftAccountToFetchEvents(context: Context, coroutineScope:
     CoroutineScope, emailId: String, startDate: Date?, endDate: Date?) {
         microsoftGraphService.authenticateAccountForEventsFetch(context, emailId, this::getEventsCallback,
             coroutineScope, startDate, endDate)
     }
 
-    suspend fun getCalendarIdsCallback(result: Result<IAuthenticationResult>) {
+    private suspend fun getCalendarIdsCallback(result: Result<IAuthenticationResult>) {
         // Handle the result
         if (result.isSuccess) {
             // Get the calendar IDs
@@ -98,7 +98,7 @@ class MicrosoftGraphRepositoryImplementation(private val microsoftGraphService: 
         }
     }
 
-    suspend fun getEventsFromEmail(emailId: String, context: Context, coroutineScope:
+    private suspend fun getEventsFromEmail(emailId: String, context: Context, coroutineScope:
     CoroutineScope, startDate: Date?, endDate: Date?): JSONObject  {
         return suspendCancellableCoroutine<JSONObject> { continuation ->
             // Authenticate user, then get calendar IDs
@@ -169,6 +169,27 @@ class MicrosoftGraphRepositoryImplementation(private val microsoftGraphService: 
             for (j in 0 until attendees.length()) {
                 attendeeEmails.add(attendees.getJSONObject(j).getString("emailAddress"))
             }
+            /*var html = event.getString("body").replace("\n", "<br>")
+            html = html.replace("\r", "<br>")
+            html = html.replace("\t", "")*/
+
+            /*// Parse the HTML
+            val doc = Ksoup.parse(html)
+
+            val innerDoc = doc.select("<body>") // JSON object
+            val innerHtml = JSONObject(innerDoc.toString())
+            println("Inner HTML: $innerHtml")
+            val innerHTML_content = innerHtml.getString("content")
+            println("Inner HTML content: $innerHTML_content")
+            val parsedInnerHTML = Ksoup.parse(innerHTML_content)
+
+            // Get all anchor tags
+            val links = parsedInnerHTML.select("a")
+            for (link in links) {
+                val href = link.attr("href")
+                println("Link: $href")
+            }*/
+
             scheduleDbViewModel.insertOrUpdate(
                 context = context,
                 type = type,

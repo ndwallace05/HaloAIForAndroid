@@ -28,6 +28,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -211,7 +212,7 @@ data class BottomNavigationItem(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NavBarsWithContent() {
+fun NavBarsWithContent(destination: Screens = Screens.Home) {
     val navController = rememberNavController() // Navigation controller
     val navBackStackEntry by navController.currentBackStackEntryAsState() // Current backstack entry
     val sheetState = rememberModalBottomSheetState() // Modal bottom sheet state for more navigation items
@@ -232,14 +233,24 @@ fun NavBarsWithContent() {
         Screens.CustomizeLTGoal.route -> Screens.CustomizeLTGoal.label
         else -> "Halo AI"
     }
+    // Navigate to destination
+    LaunchedEffect(Unit) {
+        if (destination.route != currentDestination?.route)
+        {
+            navController.navigate(destination.route)
+        }
+    }
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            TopBarForApp(currentScreenTitle,
-                navigateToPreviousScreen = {
-                navController.popBackStack()
-            },
-                navController = navController)
+            TopBarForApp(
+                currentScreenTitle,
+                navigateToPreviousScreen =
+                {
+                    navController.popBackStack()
+                },
+                navController = navController
+            )
         },
         bottomBar = {
             NavigationBar {
@@ -265,7 +276,9 @@ fun NavBarsWithContent() {
                                 showBottomSheet = true
                             } else {
                                 navController.navigate(navigationItem.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
+                                    val startDestination = navController.graph.findStartDestination()
+                                    print(startDestination.route)
+                                    popUpTo(startDestination.id) {
                                         saveState = true
                                     }
                                     launchSingleTop = true

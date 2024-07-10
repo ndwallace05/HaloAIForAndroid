@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Menu
@@ -25,14 +26,18 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,12 +47,43 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import xyz.haloai.haloai_android_productivity.xyz.haloai.haloai_android_productivity.PlanWithHaloScreenNav
+import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
 import xyz.haloai.haloai_android_productivity.R
 import xyz.haloai.haloai_android_productivity.data.ui.theme.HaloAI_Android_ProductivityTheme
+import xyz.haloai.haloai_android_productivity.ui.viewmodel.LTGoalsViewModel
+import xyz.haloai.haloai_android_productivity.xyz.haloai.haloai_android_productivity.PlanWithHaloScreenNav
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun PlanWithHaloScreen(navController: NavController) {
+    val ltGoalsViewModel: LTGoalsViewModel = koinInject()
+    val coroutineScope = rememberCoroutineScope()
+
+    val allLTGoals = remember { mutableStateListOf<LTGoalForUI>() }
+    var refreshData by remember { mutableStateOf(true) }
+
+    LaunchedEffect(refreshData) {
+        if (refreshData) {
+            allLTGoals.clear()
+            coroutineScope.launch {
+                allLTGoals.addAll(ltGoalsViewModel.getAllLTGoals().map {
+                    LTGoalForUI(
+                        id = it.id,
+                        title = it.title,
+                        dateCreated = it.dateCreated,
+                        deadline = it.deadline,
+                        eventsPerWeek = it.eventsPerWeek,
+                        minutesPerWeek = it.minutesPerWeek
+                    )
+                })
+            }
+            refreshData = false
+        }
+    }
+
     HaloAI_Android_ProductivityTheme {
         Surface(
             modifier = Modifier.fillMaxSize(),
@@ -55,12 +91,12 @@ fun PlanWithHaloScreen(navController: NavController) {
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
 
-                val ltGoalsList = listOf("GRE", "Gym Coach", "SF Trip")
-                val ltGoalsDescriptionList = listOf(
+                // val ltGoalsList = listOf("GRE", "Gym Coach", "SF Trip")
+                /*val ltGoalsDescriptionList = listOf(
                     "Prepare for GRE by 31 Dec 2024",
                     "Fitness",
                     "Trip on 15 Jan 2025"
-                )
+                )*/
 
                 LazyColumn(
                     modifier = Modifier
@@ -77,16 +113,40 @@ fun PlanWithHaloScreen(navController: NavController) {
                             modifier = Modifier.padding(bottom = 16.dp)
                         )
                     }*/
-                    items (ltGoalsList.size) { index ->
-                        TaskCard(
-                            title = ltGoalsList[index],
-                            description = ltGoalsDescriptionList[index],
-                            onCustomizeClick = { navController.navigate(PlanWithHaloScreenNav.CustomizeLTGoal.createRoute(index.toString())) },
+                    items (allLTGoals.size) { index ->
+                        LTGoalCard(
+                            ltGoal = allLTGoals[index],
+                            onCustomizeClick = { navController.navigate(PlanWithHaloScreenNav.CustomizeLTGoal.createRoute(allLTGoals[index].id.toString())) },
                             onViewScheduleClick = {},
                             onMarkAsDoneClick = {}
                         )
                     }
                 }
+
+                FloatingActionButton(
+                    onClick = {
+                        // Add a dummy note to the list
+                        coroutineScope.launch {
+                            // TODO: Replace with flow to allow text entry for a new note
+                            val date = Calendar.getInstance().apply {
+                                set(Calendar.YEAR, 2024)
+                                set(Calendar.MONTH, 12)
+                                set(Calendar.DAY_OF_MONTH, 31)
+                            }.time
+                            ltGoalsViewModel.insert("GRE", "Prepare for GRE by 31 Dec 2024", date)
+                            refreshData = true
+                        }
+                    },
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(bottom = 72.dp, end = 16.dp),
+                    content = {
+                        Icon(
+                            imageVector = Icons.Default.AddCircle,
+                            contentDescription = "Add Icon"
+                        )
+                    }
+                )
 
                 ChatWithHaloBar(modifier = Modifier.align(Alignment.BottomCenter))
 
@@ -96,9 +156,8 @@ fun PlanWithHaloScreen(navController: NavController) {
 }
 
 @Composable
-fun TaskCard(
-    title: String,
-    description: String,
+fun LTGoalCard(
+    ltGoal: LTGoalForUI,
     onCustomizeClick: () -> Unit,
     onViewScheduleClick: () -> Unit,
     onMarkAsDoneClick: () -> Unit
@@ -118,12 +177,21 @@ fun TaskCard(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = title,
+                text = ltGoal.title,
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onPrimaryContainer
             )
+            val dateFormatter = java.text.SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+            // 1 year from now
+            var oneYearFromNow = Calendar.getInstance().apply {
+                add(Calendar.YEAR, 1)
+            }.time
+            var deadlineToUse = ltGoal.deadline ?: oneYearFromNow
+            val desc = "Created on ${dateFormatter.format(ltGoal.dateCreated)} | Deadline: " +
+                    "${dateFormatter.format(deadlineToUse)} | ${ltGoal.eventsPerWeek} events per week | ${ltGoal.minutesPerWeek} " +
+                    "minutes per week"
             Text(
-                text = description,
+                text = desc,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer
             )
@@ -236,3 +304,12 @@ fun ChatWithHaloBar(modifier: Modifier) {
         }
     }
 }
+
+data class LTGoalForUI(
+    val id: Long,
+    val title: String,
+    val dateCreated: Date,
+    val deadline: Date?,
+    val eventsPerWeek: Int,
+    val minutesPerWeek: Int,
+)

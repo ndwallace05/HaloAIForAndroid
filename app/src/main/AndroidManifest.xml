@@ -26,6 +26,30 @@
         android:theme="@style/Theme.HaloAI_Android_Productivity"
         tools:targetApi="31">
 
+        <receiver
+            android:name=".ui.widgets.AssistantWidgetReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/assistant_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".ui.widgets.CatchUpWidgetReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/catch_up_widget_info" />
+        </receiver>
+
 
         <activity
             android:name=".MainActivity"

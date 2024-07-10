@@ -99,9 +99,9 @@ fun ChatThreadForPlanWithHalo(modifier: Modifier, model: ChatHistory){
             items(model.messages) { item ->
                 Box(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
                     if (item.isUserMessage)
-                        MessageBox(item, modifier = Modifier.align(Alignment.CenterEnd))
+                        MessageBox(item.text, item.isUserMessage, modifier = Modifier.align(Alignment.CenterEnd))
                     else
-                        MessageBox(item, modifier = Modifier.align(Alignment.CenterStart))
+                        MessageBox(item.text, item.isUserMessage, modifier = Modifier.align(Alignment.CenterStart))
                     // MessageBox(item)
                 }
             }

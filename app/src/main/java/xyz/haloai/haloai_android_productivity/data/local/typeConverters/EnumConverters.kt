@@ -3,6 +3,8 @@ package xyz.haloai.haloai_android_productivity.data.local.typeConverters
 import androidx.room.TypeConverter
 import xyz.haloai.haloai_android_productivity.data.local.entities.enumEmailType
 import xyz.haloai.haloai_android_productivity.data.local.entities.enumEventType
+import xyz.haloai.haloai_android_productivity.data.local.entities.enumFeedCardType
+import xyz.haloai.haloai_android_productivity.data.local.entities.enumImportanceScore
 import xyz.haloai.haloai_android_productivity.data.local.entities.enumTimeSlotForTask
 
 class timeSlotConverter {
@@ -37,6 +39,30 @@ class emailTypeConverter {
 
     @TypeConverter
     fun toInt(eventType: enumEmailType?): Int? {
+        return eventType?.value
+    }
+}
+
+class feedCardTypeConverter {
+    @TypeConverter
+    fun fromInt(value: Int?): enumFeedCardType? {
+        return value?.let { enumFeedCardType.entries.find { it.value == value } }
+    }
+
+    @TypeConverter
+    fun toInt(eventType: enumFeedCardType?): Int? {
+        return eventType?.value
+    }
+}
+
+class importanceScoreConverter {
+    @TypeConverter
+    fun fromInt(value: Int?): enumImportanceScore? {
+        return value?.let { enumImportanceScore.entries.find { it.value == value } }
+    }
+
+    @TypeConverter
+    fun toInt(eventType: enumImportanceScore?): Int? {
         return eventType?.value
     }
 }

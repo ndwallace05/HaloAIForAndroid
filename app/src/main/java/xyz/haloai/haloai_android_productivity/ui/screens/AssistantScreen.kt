@@ -44,7 +44,6 @@ import org.koin.androidx.compose.koinViewModel
 import xyz.haloai.haloai_android_productivity.R
 import xyz.haloai.haloai_android_productivity.data.ui.theme.HaloAI_Android_ProductivityTheme
 import xyz.haloai.haloai_android_productivity.ui.viewmodel.AssistantModeFunctionsViewModel
-import xyz.haloai.haloai_android_productivity.ui.viewmodel.OpenAIViewModel
 
 val conversation: StateFlow<List<ChatHistory.Message>>
     get() = _conversation
@@ -60,7 +59,6 @@ fun AssistantScreen(navController: NavController) {
 
     var isLoading by remember { mutableStateOf(false) }
     val assistantModeFunctionsViewModel: AssistantModeFunctionsViewModel = koinViewModel()
-    val openAIViewModel: OpenAIViewModel = koinViewModel()
     val onUserInput = { msg: String ->
         _conversation.value += ChatHistory.Message(
             text = msg,
@@ -75,7 +73,7 @@ fun AssistantScreen(navController: NavController) {
         if (lastMessage.isFromMe) {
             isLoading = true
             coroutineScope.launch {
-                val response = assistantModeFunctionsViewModel.ask_ai(openAIViewModel, lastMessage.text)
+                val response = assistantModeFunctionsViewModel.ask_ai(conversation = conversationState)
                 _conversation.value += ChatHistory.Message(
                     text = response,
                     isUserMessage = false
@@ -113,24 +111,24 @@ fun AssistantScreen(navController: NavController) {
 }
 
 @Composable
-fun MessageBox(message: ChatHistory.Message, modifier: Modifier) {
+fun MessageBox(text: String, isFromMe: Boolean, modifier: Modifier) {
     Box(
         modifier = modifier
             .clip(
                 RoundedCornerShape(
                     topStart = 48f,
                     topEnd = 48f,
-                    bottomStart = if (message.isFromMe) 48f else 0f,
-                    bottomEnd = if (message.isFromMe) 0f else 48f
+                    bottomStart = if (isFromMe) 48f else 0f,
+                    bottomEnd = if (isFromMe) 0f else 48f
                 )
             )
             .background(
-                if (message.isFromMe) MaterialTheme.colorScheme.primaryContainer else
+                if (isFromMe) MaterialTheme.colorScheme.primaryContainer else
                     MaterialTheme.colorScheme.tertiaryContainer
             )
             .padding(8.dp)
     ) {
-        Text(text = message.text, color = if (message.isFromMe) MaterialTheme.colorScheme.onPrimaryContainer else
+        Text(text = text, color = if (isFromMe) MaterialTheme.colorScheme.onPrimaryContainer else
             MaterialTheme.colorScheme.onTertiaryContainer)
     }
 }
@@ -167,9 +165,9 @@ fun ChatThread(modifier: Modifier, model: ChatHistory, onUserInput: (String) -> 
                     .fillMaxWidth()
                     .padding(8.dp)) {
                     if (item.isUserMessage)
-                        MessageBox(item, modifier = Modifier.align(Alignment.CenterEnd))
+                        MessageBox(item.text, item.isUserMessage, modifier = Modifier.align(Alignment.CenterEnd))
                     else
-                        MessageBox(item, modifier = Modifier.align(Alignment.CenterStart))
+                        MessageBox(item.text, item.isUserMessage, modifier = Modifier.align(Alignment.CenterStart))
                     // MessageBox(item)
                 }
             }

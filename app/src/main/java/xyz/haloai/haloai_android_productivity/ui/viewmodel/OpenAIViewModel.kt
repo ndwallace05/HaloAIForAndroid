@@ -8,4 +8,8 @@ class OpenAIViewModel(private val openAIRepository: OpenAIRepository) : ViewMode
                                    modelToUse: String = "gpt-3.5-turbo-1106", temperature: Double = 0.0): String {
         return openAIRepository.getChatGPTResponse(initialPromptText, promptText, modelToUse, temperature)
     }
+
+    suspend fun generateImageFromPrompt(promptText: String, modelToUse: String = "dall-e-3"): String {
+        return openAIRepository.generateImageFromPrompt(promptText, modelToUse)
+    }
 }

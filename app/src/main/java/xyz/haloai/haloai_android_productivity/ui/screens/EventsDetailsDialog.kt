@@ -1,5 +1,7 @@
 package xyz.haloai.haloai_android_productivity.ui.screens
 
+import android.text.util.Linkify
+import android.widget.TextView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,10 +37,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
+import androidx.core.text.util.LinkifyCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
@@ -127,11 +134,11 @@ fun EventsDetailsDialog(eventId: Long, onDismissRequest: () -> Unit) {
                             // Combine them into the final format
                             dateFormattedStr = "$day, $date • $startTime – $endTime"
                         }
-                        Text(
+                        LinkifyText(
                             text = dateFormattedStr,
                             fontSize = 16.sp,
                             modifier = Modifier.padding(bottom = 16.dp).fillMaxWidth(),
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            textAlign = TextAlign.Center
                         )
                     }
                     item {
@@ -186,6 +193,33 @@ fun EventDetailRow(icon: ImageVector, content: String) {
             modifier = Modifier.size(24.dp)
         )
         Spacer(modifier = Modifier.width(8.dp))
-        Text(text = content, fontSize = 16.sp)
+        LinkifyText(text = content, fontSize = 16.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Start)
     }
+}
+
+@Composable
+fun LinkifyText(text: String, modifier: Modifier, fontSize: TextUnit, textAlign: TextAlign) {
+    val context = LocalContext.current
+    val density = LocalDensity.current
+
+    AndroidView(factory = {
+        TextView(context).apply {
+            setText(text)
+            autoLinkMask = Linkify.ALL
+            LinkifyCompat.addLinks(this, Linkify.ALL)
+            setTextIsSelectable(true) // Optional: to make the text selectable
+            setTextSize(fontSize.value)
+            textAlignment = when (textAlign) {
+                TextAlign.Left -> TextView.TEXT_ALIGNMENT_TEXT_START
+                TextAlign.Right -> TextView.TEXT_ALIGNMENT_TEXT_END
+                TextAlign.Center -> TextView.TEXT_ALIGNMENT_CENTER
+                TextAlign.Justify -> TextView.TEXT_ALIGNMENT_TEXT_START // Justify is not directly supported
+                TextAlign.Start -> TextView.TEXT_ALIGNMENT_VIEW_START
+                TextAlign.End -> TextView.TEXT_ALIGNMENT_VIEW_END
+                else -> TextView.TEXT_ALIGNMENT_INHERIT
+            }
+        }
+    },
+        modifier = modifier
+    )
 }

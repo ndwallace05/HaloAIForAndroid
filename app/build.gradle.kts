@@ -64,6 +64,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.compose.material)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -120,4 +121,9 @@ dependencies {
     implementation(libs.msal)
     implementation(libs.volley)
     implementation(libs.microsoft.graph)
+    // Json parsing
+    implementation(libs.ksoup)
+    // Glance for Android
+    implementation(libs.androidx.glance.appwidget)
+    implementation(libs.androidx.runtime.livedata)
 }
