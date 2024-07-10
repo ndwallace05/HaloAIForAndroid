@@ -276,7 +276,9 @@ fun NavBarsWithContent(destination: Screens = Screens.Home) {
                                 showBottomSheet = true
                             } else {
                                 navController.navigate(navigationItem.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
+                                    val startDestination = navController.graph.findStartDestination()
+                                    print(startDestination.route)
+                                    popUpTo(startDestination.id) {
                                         saveState = true
                                     }
                                     launchSingleTop = true

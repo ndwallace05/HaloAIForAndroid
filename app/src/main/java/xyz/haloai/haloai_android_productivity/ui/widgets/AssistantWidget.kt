@@ -3,7 +3,6 @@ package xyz.haloai.haloai_android_productivity.ui.widgets
 import android.content.Context
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.glance.ColorFilter
 import androidx.glance.GlanceId
@@ -43,15 +42,20 @@ class AssistantWidget : GlanceAppWidget() {
 
 @Composable
 fun AssistantWidgetLayout(context: Context) {
+    val assistantScreenParameterKey = ActionParameters.Key<String>("defaultDestination")
     Box(
         modifier = GlanceModifier
             .fillMaxWidth()
-            .background(Color(0xFFF3F4F6))
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.8f))
+            .clickable(onClick =
+            actionStartActivity<MainActivity>(
+                parameters = actionParametersOf( assistantScreenParameterKey to "Screens.Assistant")
+            ))
     ) {
         Row(
             modifier = GlanceModifier
                 .fillMaxWidth()
-                .background(color = MaterialTheme.colorScheme.surfaceContainer)
+                .background(color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.8f))
                 .cornerRadius(8.dp)
                 .padding(horizontal = 12.dp, vertical = 12.dp)
 
@@ -62,7 +66,6 @@ fun AssistantWidgetLayout(context: Context) {
                 modifier = GlanceModifier.size(24.dp),
                 colorFilter = ColorFilter.tint(ColorProvider(MaterialTheme.colorScheme.onSurface))
             )
-            val assistantScreenParameterKey = ActionParameters.Key<String>("defaultDestination")
             Text(modifier =
             GlanceModifier.clickable(onClick =
                 actionStartActivity<MainActivity>(

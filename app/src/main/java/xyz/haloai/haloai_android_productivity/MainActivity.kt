@@ -25,6 +25,9 @@ class MainActivity() : ComponentActivity() {
             if (destinationFromIntent == "Screens.Assistant") {
                 defaultDestination = Screens.Assistant
             }
+            else if (destinationFromIntent == "Screens.Calendar") {
+                defaultDestination = Screens.Calendar
+            }
         }
 
         enableEdgeToEdge()

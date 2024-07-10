@@ -9,7 +9,6 @@ import xyz.haloai.haloai_android_productivity.services.repository.AssistantModeF
 import xyz.haloai.haloai_android_productivity.ui.viewmodel.AssistantModeFunctionsViewModel
 
 val assistantModeFunctionsModule = module {
-
     single { AssistantModeFunctions (androidContext()) }
     single<AssistantModeFunctionsRepository>  { AssistantModeFunctionsImpl(get()) }
     viewModel { AssistantModeFunctionsViewModel(get()) }

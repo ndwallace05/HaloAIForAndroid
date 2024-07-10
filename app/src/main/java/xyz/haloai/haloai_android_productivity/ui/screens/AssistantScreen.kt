@@ -44,7 +44,6 @@ import org.koin.androidx.compose.koinViewModel
 import xyz.haloai.haloai_android_productivity.R
 import xyz.haloai.haloai_android_productivity.data.ui.theme.HaloAI_Android_ProductivityTheme
 import xyz.haloai.haloai_android_productivity.ui.viewmodel.AssistantModeFunctionsViewModel
-import xyz.haloai.haloai_android_productivity.ui.viewmodel.OpenAIViewModel
 
 val conversation: StateFlow<List<ChatHistory.Message>>
     get() = _conversation
@@ -60,7 +59,6 @@ fun AssistantScreen(navController: NavController) {
 
     var isLoading by remember { mutableStateOf(false) }
     val assistantModeFunctionsViewModel: AssistantModeFunctionsViewModel = koinViewModel()
-    val openAIViewModel: OpenAIViewModel = koinViewModel()
     val onUserInput = { msg: String ->
         _conversation.value += ChatHistory.Message(
             text = msg,
@@ -75,7 +73,7 @@ fun AssistantScreen(navController: NavController) {
         if (lastMessage.isFromMe) {
             isLoading = true
             coroutineScope.launch {
-                val response = assistantModeFunctionsViewModel.ask_ai(openAIViewModel, lastMessage.text)
+                val response = assistantModeFunctionsViewModel.ask_ai(conversation = conversationState)
                 _conversation.value += ChatHistory.Message(
                     text = response,
                     isUserMessage = false

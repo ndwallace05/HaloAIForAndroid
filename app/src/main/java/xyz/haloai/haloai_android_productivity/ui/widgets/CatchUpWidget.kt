@@ -15,6 +15,10 @@ import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
 import androidx.glance.Image
 import androidx.glance.ImageProvider
+import androidx.glance.action.ActionParameters
+import androidx.glance.action.actionParametersOf
+import androidx.glance.action.actionStartActivity
+import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.cornerRadius
@@ -31,12 +35,14 @@ import androidx.glance.layout.padding
 import androidx.glance.layout.size
 import androidx.glance.layout.width
 import androidx.glance.layout.wrapContentHeight
+import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
+import xyz.haloai.haloai_android_productivity.MainActivity
 import xyz.haloai.haloai_android_productivity.R
 import xyz.haloai.haloai_android_productivity.data.local.entities.enumFeedCardType
 import xyz.haloai.haloai_android_productivity.data.ui.compose_components.EventDataForUI
@@ -80,7 +86,6 @@ fun CatchUpWidgetLayout(context: Context) {
         Header()
         LaunchedEffect(Unit) {
             coroutineScope.launch {
-
                 val topNFeedCards = productivityFeedViewModel.getTopFeedCards(numFeedCardsToShow)
                 topNItems.clear()
                 for (feedCard in topNFeedCards) {
@@ -165,14 +170,15 @@ fun Header() {
     Row(
         modifier = GlanceModifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
+            .padding(vertical = 12.dp)
             .background(color = MaterialTheme.colorScheme.surface),
         horizontalAlignment = Alignment.Horizontal.CenterHorizontally,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Image(
-                provider = ImageProvider(R.drawable.haloai_logo), // TODO: Replace with star icon (R.drawable.ic_star
+                provider = ImageProvider(R.drawable.haloai_logo), // TODO: Replace with star icon
+                // (R.drawable.ic_star)
                 contentDescription = "Star Icon",
                 modifier = GlanceModifier.size(24.dp)
             )
@@ -182,6 +188,7 @@ fun Header() {
                 style =
                 TextStyle(
                     fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
                     color = ColorProvider(MaterialTheme.colorScheme.onSurface)
             ))
         }
@@ -198,26 +205,54 @@ fun Header() {
 
 @Composable
 fun CatchUpItem(cardData: DataForCatchUpCard) {
-    val todayDate = Date(System.currentTimeMillis())
+    val todayDateStart = Calendar.getInstance()
+    todayDateStart.set(Calendar.HOUR_OF_DAY, 0)
+    todayDateStart.set(Calendar.MINUTE, 0)
+    todayDateStart.set(Calendar.SECOND, 0)
+    todayDateStart.set(Calendar.MILLISECOND, 0)
+    val todayDate = todayDateStart.time
     val eodTime = Calendar.getInstance()
     eodTime.set(Calendar.HOUR_OF_DAY, 23)
     eodTime.set(Calendar.MINUTE, 59)
     eodTime.set(Calendar.SECOND, 59)
     eodTime.set(Calendar.MILLISECOND, 999)
 
+    var modifier = GlanceModifier
+        .fillMaxWidth()
+        .wrapContentHeight()
+        .padding(bottom = 8.dp, start = 4.dp, end = 4.dp)
+        .padding(4.dp)
+        .cornerRadius(12.dp)
+
+    val assistantScreenParameterKey = ActionParameters.Key<String>("defaultDestination")
+    val backgroundColor = when (cardData.type) {
+        EnumCatchUpCardType.FEED_CARD -> MaterialTheme.colorScheme.secondaryContainer
+        EnumCatchUpCardType.EVENT -> MaterialTheme.colorScheme.tertiaryContainer
+    }
+    val fontColor = when (cardData.type) {
+        EnumCatchUpCardType.FEED_CARD -> MaterialTheme.colorScheme.onSecondaryContainer
+        EnumCatchUpCardType.EVENT -> MaterialTheme.colorScheme.onTertiaryContainer
+    }
+    if (cardData.type == EnumCatchUpCardType.FEED_CARD) {
+        modifier = modifier.clickable(onClick =
+            actionStartActivity<MainActivity>(actionParametersOf(assistantScreenParameterKey to
+                    "Screens.Home"))
+        )
+    } else if (cardData.type == EnumCatchUpCardType.EVENT) {
+        modifier = modifier.clickable(onClick =
+            actionStartActivity<MainActivity>(actionParametersOf(assistantScreenParameterKey to
+                    "Screens.Calendar"))
+        )
+    }
+
     Box(
-        modifier = GlanceModifier
-            .fillMaxWidth()
-            .wrapContentHeight()
-            .padding(bottom = 8.dp, start = 4.dp, end = 4.dp)
-            .padding(4.dp)
-            .cornerRadius(8.dp)
+        modifier = modifier,
     ) {
         Row(
             modifier = GlanceModifier
                 .fillMaxWidth()
                 .wrapContentHeight()
-                .background(MaterialTheme.colorScheme.secondaryContainer)
+                .background(backgroundColor)
                 .cornerRadius(8.dp)
                 .padding(8.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -262,14 +297,14 @@ fun CatchUpItem(cardData: DataForCatchUpCard) {
                 Image(
                     provider = ImageProvider(cardData.drawable),
                     contentDescription = "Outlook Icon",
-                    modifier = GlanceModifier.size(24.dp),
-                    colorFilter = ColorFilter.tint(ColorProvider(MaterialTheme.colorScheme.onSecondaryContainer))
+                    modifier = GlanceModifier.size(24.dp).width(60.dp),
+                    colorFilter = ColorFilter.tint(ColorProvider(fontColor))
                 )
             }
             Text(
                 text = cardData.title,
                 style = TextStyle(
-                    color = ColorProvider(MaterialTheme.colorScheme.onSecondaryContainer),
+                    color = ColorProvider(fontColor),
                     fontSize = 16.sp
                 ),
                 modifier = GlanceModifier.padding(start = 8.dp)
