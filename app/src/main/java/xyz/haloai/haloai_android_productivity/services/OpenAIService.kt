@@ -5,6 +5,8 @@ import com.aallam.openai.api.chat.ChatCompletion
 import com.aallam.openai.api.chat.ChatCompletionRequest
 import com.aallam.openai.api.chat.ChatMessage
 import com.aallam.openai.api.chat.ChatRole
+import com.aallam.openai.api.completion.CompletionRequest
+import com.aallam.openai.api.completion.TextCompletion
 import com.aallam.openai.api.http.Timeout
 import com.aallam.openai.api.image.ImageCreation
 import com.aallam.openai.api.image.ImageSize
@@ -29,7 +31,20 @@ class OpenAIService(private val context: Context) {
     suspend fun getChatGPTResponse(initialPromptText:String, promptText: String,
                                    modelToUse:String = "gpt-3.5-turbo-1106", temperature: Double
                                    = 0.0): String {
-
+        if(modelToUse == "gpt-3.5-turbo-instruct"){
+            val promptToSend = "INSTRUCTIONS:\n" + initialPromptText + "\n\nUser:\n" + promptText
+            val completionRequest = CompletionRequest(
+                model = ModelId(modelToUse),
+                prompt = promptToSend,
+                echo = true)
+            val completion: TextCompletion = openAI.completion(completionRequest)
+            if (completion.choices[0].text != null) {
+                return completion.choices[0].text!!
+            }
+            else {
+                return ""
+            }
+        }
         val chatCompletionRequest = ChatCompletionRequest(
             model = ModelId(modelToUse),
             temperature = temperature,
