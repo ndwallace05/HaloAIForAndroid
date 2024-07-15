@@ -2,6 +2,7 @@ package xyz.haloai.haloai_android_productivity.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import xyz.haloai.haloai_android_productivity.data.local.entities.FeedCard
+import xyz.haloai.haloai_android_productivity.data.local.entities.enumEmailType
 import xyz.haloai.haloai_android_productivity.data.local.entities.enumFeedCardType
 import xyz.haloai.haloai_android_productivity.data.local.repository.ProductivityFeedRepository
 import java.util.Date
@@ -34,6 +35,10 @@ class ProductivityFeedViewModel(private val repository: ProductivityFeedReposito
 
     suspend fun getTopFeedCards(count: Int): List<FeedCard> {
         return repository.getTopFeedCards(count)
+    }
+
+    suspend fun processEmailContent(emailId: String, emailType: enumEmailType, emailSubject: String, emailSnippet: String, emailSender: String, emailBody: String) {
+        repository.processEmailContent(emailId, emailType, emailSubject, emailSnippet, emailSender, emailBody)
     }
 
 }

@@ -62,10 +62,10 @@ class LTGoalsRepository(private val ltGoalDao: LTGoalDao): KoinComponent {
         maxMinutesPerEvent: Int? = null,
         isActive: Boolean? = null
     ) = withContext(Dispatchers.IO) {
-        if (title == null && content == null && deadline == null)
+        /*if (title == null && content == null && deadline == null)
         {
             return@withContext false
-        }
+        }*/
         val ltGoal = ltGoalDao.getById(id)
         val titleToUse = title ?: ltGoal.title
         val contentToUse = content ?: ltGoal.context

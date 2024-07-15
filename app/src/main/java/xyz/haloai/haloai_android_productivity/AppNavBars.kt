@@ -28,7 +28,6 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -213,6 +212,7 @@ data class BottomNavigationItem(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NavBarsWithContent(destination: Screens = Screens.Home) {
+    var initialDestination = destination
     val navController = rememberNavController() // Navigation controller
     val navBackStackEntry by navController.currentBackStackEntryAsState() // Current backstack entry
     val sheetState = rememberModalBottomSheetState() // Modal bottom sheet state for more navigation items
@@ -233,13 +233,14 @@ fun NavBarsWithContent(destination: Screens = Screens.Home) {
         Screens.CustomizeLTGoal.route -> Screens.CustomizeLTGoal.label
         else -> "Halo AI"
     }
-    // Navigate to destination
-    LaunchedEffect(Unit) {
-        if (destination.route != currentDestination?.route)
+    // Navigate to initial destination
+    /*LaunchedEffect(Unit) {
+        if (initialDestination.route != currentDestination?.route)
         {
-            navController.navigate(destination.route)
+            navController.navigate(initialDestination.route)
+            initialDestination = Screens.Home
         }
-    }
+    }*/
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
@@ -293,7 +294,7 @@ fun NavBarsWithContent(destination: Screens = Screens.Home) {
     ) {paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = Screens.Home.route,
+            startDestination = initialDestination.route,
             modifier = Modifier.padding(paddingValues = paddingValues)) {
             composable(Screens.Home.route) {
                 HomeScreen(

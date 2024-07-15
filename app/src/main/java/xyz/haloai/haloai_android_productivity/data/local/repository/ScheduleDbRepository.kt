@@ -4,6 +4,8 @@ import android.content.Context
 import android.text.format.DateFormat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -16,7 +18,6 @@ import xyz.haloai.haloai_android_productivity.data.ui.viewmodel.EmailDbViewModel
 import xyz.haloai.haloai_android_productivity.misc.AlarmHelper
 import xyz.haloai.haloai_android_productivity.ui.viewmodel.GmailViewModel
 import xyz.haloai.haloai_android_productivity.ui.viewmodel.MicrosoftGraphViewModel
-import xyz.haloai.haloai_android_productivity.ui.viewmodel.ScheduleDbViewModel
 import java.util.Calendar
 import java.util.Date
 
@@ -27,6 +28,9 @@ class ScheduleDbRepository(private val scheduleDao: ScheduleEntriesDao): KoinCom
     private val gmailViewModel: GmailViewModel by inject()
     private val microsoftGraphViewModel: MicrosoftGraphViewModel by inject()
     private val emailDbViewModel: EmailDbViewModel by inject()
+    private val updateMutex = Mutex()
+    // Save last time mutex was locked, and avoid updating the schedule if it was updated in the last 5 minutes
+    private var lastUpdateMutexLockedTime: Long = 0
 
     suspend fun getEventsBetween(start: Date, end: Date): List<ScheduleEntry> = withContext(
         Dispatchers.IO)
@@ -475,23 +479,40 @@ class ScheduleDbRepository(private val scheduleDao: ScheduleEntriesDao): KoinCom
         }
     }
 
-    suspend fun updateScheduleDb(scheduleDbViewModel: ScheduleDbViewModel, context: Context,
+    suspend fun updateScheduleDb(context: Context,
                                  coroutineScope: CoroutineScope, startDate: Date? = null, endDate:
                                  Date? = null)
     {
-        // Looks up emailDb, gets all emails, and updates the scheduleDb for each email
-        val allGoogleEmails = emailDbViewModel.getEmailsOfType(enumEmailType.GMAIL)
-        for (email in allGoogleEmails)
-        {
-            val calendarIds = emailDbViewModel.getCalendarIdsForEmail(email.email)
-            gmailViewModel.updateScheduleDbForEmail(scheduleDbViewModel, context, email.email,
-                calendarIds) // TODO: Add startDate and endDate support
-        }
-        val allMicrosoftEmails = emailDbViewModel.getEmailsOfType(enumEmailType.MICROSOFT)
-        for (email in allMicrosoftEmails)
-        {
-            microsoftGraphViewModel.updateScheduleDbForEmail(emailId = email.email, context =
-            context, coroutineScope = coroutineScope, startDate = startDate, endDate = endDate)
+        // Check if the mutex was locked in the last 5 minutes
+        updateMutex.withLock {
+
+            val currentTime = System.currentTimeMillis()
+            if (currentTime - lastUpdateMutexLockedTime < 300000) // 5 minutes
+            {
+                return
+            }
+            lastUpdateMutexLockedTime = currentTime
+
+            // Looks up emailDb, gets all emails, and updates the scheduleDb for each email
+            val allGoogleEmails = emailDbViewModel.getEmailsOfType(enumEmailType.GMAIL)
+            for (email in allGoogleEmails) {
+                val calendarIds = emailDbViewModel.getCalendarIdsForEmail(email.email)
+                gmailViewModel.updateScheduleDbForEmail(
+                    context = context,
+                    emailId = email.email,
+                    calendarIds = calendarIds
+                ) // TODO: Add startDate and endDate support
+            }
+            val allMicrosoftEmails = emailDbViewModel.getEmailsOfType(enumEmailType.MICROSOFT)
+            for (email in allMicrosoftEmails) {
+                microsoftGraphViewModel.updateScheduleDbForEmail(
+                    emailId = email.email,
+                    context = context,
+                    coroutineScope = coroutineScope,
+                    startDate = startDate,
+                    endDate = endDate,
+                )
+            }
         }
     }
 

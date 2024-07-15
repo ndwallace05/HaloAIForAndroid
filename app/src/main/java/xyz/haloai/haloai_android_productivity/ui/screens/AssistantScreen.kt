@@ -23,6 +23,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -33,9 +34,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.navigation.NavController
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -67,6 +71,13 @@ fun AssistantScreen(navController: NavController) {
     }
     val coroutineScope = rememberCoroutineScope()
     val conversationState by _conversation.collectAsState()
+
+    fun resetConversation() {
+        _conversation.value = listOf(
+            ChatHistory.Message.initConv
+        )
+    }
+
     LaunchedEffect(key1 = conversationState) {
         // Parse last message, if it is a user message, send it to the AI
         val lastMessage = conversationState.last()
@@ -80,6 +91,39 @@ fun AssistantScreen(navController: NavController) {
                 )
                 isLoading = false
             }
+        }
+    }
+
+    // Use DisposableEffect to save the note when the composable leaves the composition
+    DisposableEffect(Unit) {
+        onDispose {
+            resetConversation()
+        }
+    }
+
+    // Use OnLifecycleEvent to save the note when the lifecycle event occurs
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_ANY) {
+                resetConversation()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
+    // Add a listener to save the note when the user navigates away
+    DisposableEffect(navController) {
+        val callback = NavController.OnDestinationChangedListener { _, _, _ ->
+            resetConversation()
+        }
+        navController.addOnDestinationChangedListener(callback)
+
+        onDispose {
+            navController.removeOnDestinationChangedListener(callback)
         }
     }
 

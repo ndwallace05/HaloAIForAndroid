@@ -77,6 +77,7 @@ import xyz.haloai.haloai_android_productivity.R
 import xyz.haloai.haloai_android_productivity.data.local.entities.enumFeedCardType
 import xyz.haloai.haloai_android_productivity.data.local.entities.enumImportanceScore
 import xyz.haloai.haloai_android_productivity.data.ui.theme.HaloAI_Android_ProductivityTheme
+import xyz.haloai.haloai_android_productivity.misc.launchGmailSearch
 import xyz.haloai.haloai_android_productivity.ui.viewmodel.ProductivityFeedOptionsViewModel
 import xyz.haloai.haloai_android_productivity.ui.viewmodel.ProductivityFeedViewModel
 import java.util.Date
@@ -135,14 +136,15 @@ fun HomeScreen(navController: NavController) {
     fun onDismissCard(card: FeedCardDataForUi, removeFromDb: Boolean = true) {
         // Handle dismiss action here
         cardsToDisplay.remove(card)
+        selectedCardId.value = -1
+        showOptionsList.value = false
         if (removeFromDb)
         {
             coroutineScope.launch {
                 productivityFeedViewModel.deleteFeedCardById(card.id)
             }
         }
-        selectedCardId.value = -1
-        showOptionsList.value = false
+
     }
 
     fun showOptions(id: Long) {
@@ -330,7 +332,7 @@ fun ProductivityFeedCard(card: FeedCardDataForUi, onDismiss: (FeedCardDataForUi,
             // Swiped left (dismiss)
             LaunchedEffect(Unit) {
                 // Handle dismiss action
-                onDismiss(card, false)
+                onDismiss(card, true)
             }
         }
 
@@ -621,7 +623,14 @@ fun getOptionDetails(context: Context, card: FeedCardDataForUi, showOptionsFun: 
             optionText = "Read more",
             optionClickFunction =
             {
-                Toast.makeText(context, "Read more", Toast.LENGTH_SHORT).show()
+                val emailId = it.extraDescription.split(":", limit = 2)[1].trim()
+                val queryText = it.title
+                launchGmailSearch(
+                    searchQuery = queryText,
+                    emailAddress = emailId,
+                    context = context
+                )
+                Toast.makeText(context, "${emailId}: ${queryText}", Toast.LENGTH_LONG).show()
                 onDismissFun(it, true)
             },
             logoResource = null,

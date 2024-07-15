@@ -46,7 +46,7 @@ fun AssistantWidgetLayout(context: Context) {
     Box(
         modifier = GlanceModifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.8f))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f))
             .clickable(onClick =
             actionStartActivity<MainActivity>(
                 parameters = actionParametersOf( assistantScreenParameterKey to "Screens.Assistant")

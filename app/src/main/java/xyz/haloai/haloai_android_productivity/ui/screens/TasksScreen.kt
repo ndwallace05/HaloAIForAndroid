@@ -1,5 +1,6 @@
 package xyz.haloai.haloai_android_productivity.xyz.haloai.haloai_android_productivity.data.ui.screens
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -55,6 +56,7 @@ import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
+import org.koin.java.KoinJavaComponent.inject
 import xyz.haloai.haloai_android_productivity.R
 import xyz.haloai.haloai_android_productivity.data.ui.theme.HaloAI_Android_ProductivityTheme
 import xyz.haloai.haloai_android_productivity.ui.screens.TaskDetailsDialog
@@ -74,7 +76,7 @@ fun TasksScreen(navController: NavController) {
         )
     ) }
     val context = LocalContext.current
-    val scheduleDbViewModel: ScheduleDbViewModel = koinViewModel { parametersOf(context, false) }
+    val scheduleDbViewModel: ScheduleDbViewModel = koinViewModel { parametersOf(context) }
     val coroutineScope = rememberCoroutineScope()
     val dateFormatter = SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
     var showSeeMore = remember { mutableStateOf(false) }
@@ -199,7 +201,8 @@ fun TasksScreen(navController: NavController) {
                             },
                             onClick = {
                                 selectedTaskId.value = it
-                            }
+                            },
+                            context = context
                         )
                     }
 
@@ -226,10 +229,10 @@ fun TasksScreen(navController: NavController) {
 }
 
 @Composable
-fun TaskList(tasks: List<TaskDataForUi>, onDelete: (TaskDataForUi) -> Unit = {}, showSeeMore: Boolean = false, onShowSeeMoreClick: () -> Unit = {}, onClick: (Long) -> Unit) {
+fun TaskList(tasks: List<TaskDataForUi>, onDelete: (TaskDataForUi) -> Unit = {}, showSeeMore: Boolean = false, onShowSeeMoreClick: () -> Unit = {}, onClick: (Long) -> Unit, context: Context) {
     Column {
         for(task in tasks) {
-            TaskItem(task = task, onDelete = onDelete, modifier = Modifier.clickable { onClick(task.id) })
+            TaskItem(task = task, onDelete = onDelete, modifier = Modifier.clickable { onClick(task.id) }, context = context)
         }
         if (showSeeMore) {
             Button(
@@ -254,9 +257,9 @@ fun TaskList(tasks: List<TaskDataForUi>, onDelete: (TaskDataForUi) -> Unit = {},
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TaskItem(task: TaskDataForUi, onDelete: (TaskDataForUi) -> Unit = {}, modifier: Modifier) {
+fun TaskItem(task: TaskDataForUi, onDelete: (TaskDataForUi) -> Unit = {}, modifier: Modifier, context: Context) {
     var isChecked by remember { mutableStateOf(false) }
-    val scheduleDbViewModel: ScheduleDbViewModel = koinViewModel()
+    val scheduleDbViewModel: ScheduleDbViewModel = koinViewModel { parametersOf(context) }
     val coroutineScope = rememberCoroutineScope()
     var showDatePicker by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState(initialSelectedDateMillis = task.startDate?.time ?: System.currentTimeMillis())

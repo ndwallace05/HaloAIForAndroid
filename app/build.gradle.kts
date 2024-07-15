@@ -126,4 +126,8 @@ dependencies {
     // Glance for Android
     implementation(libs.androidx.glance.appwidget)
     implementation(libs.androidx.runtime.livedata)
+    // WorkManager
+    implementation(libs.androidx.work.runtime.ktx)
+    // MLKit
+    implementation(libs.text.recognition)
 }

@@ -82,7 +82,7 @@ fun CalendarScreen(navController: NavController) {
     val context = LocalContext.current
     val gmailViewModel: GmailViewModel = koinViewModel() // Refresh the
     // view model
-    val scheduleDbViewModel: ScheduleDbViewModel = koinViewModel { parametersOf(context, true) } //
+    val scheduleDbViewModel: ScheduleDbViewModel = koinViewModel { parametersOf(context) } //
     // Refresh the view model
     val listOfEventsToDisplay = remember { mutableStateListOf<EventDataForUI>() }
     val listOfConfirmedTasks = remember { mutableStateListOf<TaskDataForCalendarUI>() }
@@ -125,7 +125,7 @@ fun CalendarScreen(navController: NavController) {
     }
 
 
-    LaunchedEffect (selectedDate.value) {
+    LaunchedEffect (selectedDate.value) { // Events
         coroutineScope.launch {
             // scheduleDbViewModel.updateScheduleDb(context)
             var timeForSelectedDate = Calendar.getInstance()
@@ -150,6 +150,10 @@ fun CalendarScreen(navController: NavController) {
             allEventsToDisplay.forEach {
                 var startAsLocalDateTime = it.startTime!!.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
                 var endAsLocalDateTime = it.endTime!!.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
+                // If end time is 12:00 AM, set it to 11:59 PM
+                if (endAsLocalDateTime.toLocalTime().hour == 0 && endAsLocalDateTime.toLocalTime().minute == 0) {
+                    endAsLocalDateTime = endAsLocalDateTime.minusSeconds(1)
+                }
                 listOfEventsToDisplay.add(EventDataForUI(
                     name = it.title,
                     color = Color(0xFF6DD3CE), // Replace with colors specific to the calendar
@@ -162,7 +166,7 @@ fun CalendarScreen(navController: NavController) {
         }
     }
 
-    LaunchedEffect (selectedDate.value) {
+    LaunchedEffect (selectedDate.value) { // Tasks
         coroutineScope.launch {
             // scheduleDbViewModel.updateScheduleDb(context)
             var timeForSelectedDate = Calendar.getInstance()

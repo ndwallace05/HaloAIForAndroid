@@ -25,7 +25,7 @@ class EventNotificationCreation: BroadcastReceiver(), KoinComponent {
 
     private val scope = CoroutineScope(Dispatchers.IO) // Coroutine scope for database operations
     private val context = getKoin().get<Context>()
-    private val scheduleDbViewModel: ScheduleDbViewModel by inject { parametersOf(context, false) }
+    private val scheduleDbViewModel: ScheduleDbViewModel by inject { parametersOf(context) }
 
     override fun onReceive(context: Context, intent: Intent) {
 

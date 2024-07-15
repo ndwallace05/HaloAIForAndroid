@@ -16,4 +16,10 @@ class MicrosoftGraphViewModel(private val microsoftGraphRepository: MicrosoftGra
         return microsoftGraphRepository.updateScheduleDbForEmail(emailId, context, coroutineScope, startDate, endDate)
     }
 
+    suspend fun checkForNewEmails() {
+        // Add logic to check and process new emails
+        microsoftGraphRepository.checkAndProcessNewEmails()
+        // Example: repository.checkAndProcessNewEmails()
+    }
+
 }
