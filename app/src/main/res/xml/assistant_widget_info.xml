@@ -6,6 +6,7 @@
     android:resizeMode="horizontal"
     android:targetCellWidth="4"
     android:targetCellHeight="1"
-    android:updatePeriodMillis="0"
+    android:initialKeyguardLayout="@drawable/haloai_logo"
+    android:updatePeriodMillis="600000"
     android:widgetCategory="home_screen">
 </appwidget-provider>

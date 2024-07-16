@@ -1,27 +1,31 @@
 package xyz.haloai.haloai_android_productivity.services.repository
 
+import android.graphics.Bitmap
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import xyz.haloai.haloai_android_productivity.services.AssistantModeFunctions
 import xyz.haloai.haloai_android_productivity.services.EnumFunctionTypes
 import xyz.haloai.haloai_android_productivity.ui.viewmodel.OpenAIViewModel
+import xyz.haloai.haloai_android_productivity.ui.viewmodel.TextExtractionFromImageViewModel
 import xyz.haloai.haloai_android_productivity.xyz.haloai.haloai_android_productivity.data.ui.screens.ChatHistory
 
 interface AssistantModeFunctionsRepository {
     // Functions used by the Assistant Mode (AI Assistant) to perform tasks like sending emails, scheduling events, etc. for the user
     suspend fun ask_ai(conversation: List<ChatHistory.Message>): String
+
+    suspend fun processScreenshot(screenshot: Bitmap)
 }
 
 class AssistantModeFunctionsImpl(private val assistantModeFunctions: AssistantModeFunctions): AssistantModeFunctionsRepository, KoinComponent {
 
     // Functions used by the Assistant Mode (AI Assistant) to perform tasks like sending emails, scheduling events, etc. for the user
     private val openAIViewModel: OpenAIViewModel by inject()
+    private val textExtractionFromImageViewModel: TextExtractionFromImageViewModel by inject()
 
-    // Business Logic
-    override suspend fun ask_ai(conversation: List<ChatHistory.Message>): String {
-        // Ask the AI a question
-//        val rawResponse = assistantModeFunctions.ask_ai(conversation)
-        val functionsList = assistantModeFunctions.convert_chat_to_functions(conversation)
+    private suspend fun ParseFunctionsListAndExecuteOps(functionsList: String): String {
+        // Parse the functions list
         val parsedResponse = assistantModeFunctions.parseAssistantOutput(functionsList)
 
         var finalResponse = ""
@@ -93,6 +97,23 @@ class AssistantModeFunctionsImpl(private val assistantModeFunctions: AssistantMo
             }
         }
         return finalResponse
+    }
+
+    // Business Logic
+    override suspend fun ask_ai(conversation: List<ChatHistory.Message>): String {
+        // Ask the AI a question
+//        val rawResponse = assistantModeFunctions.ask_ai(conversation)
+        val functionsList = assistantModeFunctions.convert_chat_to_functions(conversation)
+        val response = ParseFunctionsListAndExecuteOps(functionsList)
+        return response
+    }
+
+    override suspend fun processScreenshot(screenshot: Bitmap) {
+        // Process the screenshot
+        val coroutineScope = CoroutineScope(Dispatchers.IO)
+        val text = textExtractionFromImageViewModel.getTextFromBitmap(screenshot!!, coroutineScope)
+        val functionsList = assistantModeFunctions.convertScreenshotTextToFunctions(text)
+        ParseFunctionsListAndExecuteOps(functionsList)
     }
 
 }

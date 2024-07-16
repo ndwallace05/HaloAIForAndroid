@@ -16,7 +16,7 @@ import xyz.haloai.haloai_android_productivity.data.local.entities.enumTimeSlotFo
 import xyz.haloai.haloai_android_productivity.data.local.repository.ScheduleDbRepository
 import java.util.Date
 
-class ScheduleDbViewModel(private val repository: ScheduleDbRepository, context: Context, refreshCalendar: Boolean = false) : ViewModel() {
+class ScheduleDbViewModel(private val repository: ScheduleDbRepository, context: Context, refreshDb: Boolean = true) : ViewModel() {
 
     // val allUnscheduledTasks: Flow<List<ScheduleEntry>> = repository.allUnscheduledTasks
 
@@ -28,9 +28,9 @@ class ScheduleDbViewModel(private val repository: ScheduleDbRepository, context:
     val coroutineScope = viewModelScope
 
     init {
-        if (refreshCalendar)
+        // var context = getKoin().get<Context>()
+        if (refreshDb)
         {
-            // var context = getKoin().get<Context>()
             loadData(context, coroutineScope)
         }
     }
@@ -195,7 +195,12 @@ class ScheduleDbViewModel(private val repository: ScheduleDbRepository, context:
 
     suspend fun updateScheduleDb(context: Context, coroutineScope: CoroutineScope, startDate: Date? = null, endDate: Date? = null)
     {
-        repository.updateScheduleDb(this, context, coroutineScope, startDate, endDate)
+        repository.updateScheduleDb(
+            context = context,
+            coroutineScope = coroutineScope,
+            startDate = startDate,
+            endDate = endDate
+        )
     }
 
     suspend fun getSuggestedTasksForDay(context: Context, date: Date): List<ScheduleEntry> =
@@ -218,7 +223,7 @@ class ContentViewModelFactory(private val repository: ScheduleDbRepository, priv
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(ScheduleDbViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return ScheduleDbViewModel(repository, context, false) as T
+            return ScheduleDbViewModel(repository, context) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

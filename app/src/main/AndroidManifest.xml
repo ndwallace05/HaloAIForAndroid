@@ -4,6 +4,7 @@
 
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.READ_CALENDAR" />
@@ -11,6 +12,8 @@
     <uses-permission android:name="android.permission.READ_CONTACTS" />
     <uses-permission android:name="android.permission.WRITE_CONTACTS" />
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
+    <uses-permission android:name="android.permission.USE_CREDENTIALS" />
+    <uses-permission android:name="android.permission.MANAGE_ACCOUNTS" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.INTERNET" />
 
@@ -28,7 +31,8 @@
 
         <receiver
             android:name=".ui.widgets.AssistantWidgetReceiver"
-            android:exported="true">
+            android:exported="true"
+            android:label="Assistant Widget">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
@@ -40,7 +44,8 @@
 
         <receiver
             android:name=".ui.widgets.CatchUpWidgetReceiver"
-            android:exported="true">
+            android:exported="true"
+            android:label="Catch-Up Widget">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
@@ -50,6 +55,11 @@
                 android:resource="@xml/catch_up_widget_info" />
         </receiver>
 
+        <service
+            android:name=".ScreenshotObserverService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="dataSync"/>
 
         <activity
             android:name=".MainActivity"

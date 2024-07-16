@@ -77,6 +77,8 @@ import xyz.haloai.haloai_android_productivity.R
 import xyz.haloai.haloai_android_productivity.data.local.entities.enumFeedCardType
 import xyz.haloai.haloai_android_productivity.data.local.entities.enumImportanceScore
 import xyz.haloai.haloai_android_productivity.data.ui.theme.HaloAI_Android_ProductivityTheme
+import xyz.haloai.haloai_android_productivity.misc.launchGmailSearch
+import xyz.haloai.haloai_android_productivity.misc.launchOutlookSearch
 import xyz.haloai.haloai_android_productivity.ui.viewmodel.ProductivityFeedOptionsViewModel
 import xyz.haloai.haloai_android_productivity.ui.viewmodel.ProductivityFeedViewModel
 import java.util.Date
@@ -135,14 +137,15 @@ fun HomeScreen(navController: NavController) {
     fun onDismissCard(card: FeedCardDataForUi, removeFromDb: Boolean = true) {
         // Handle dismiss action here
         cardsToDisplay.remove(card)
+        selectedCardId.value = -1
+        showOptionsList.value = false
         if (removeFromDb)
         {
             coroutineScope.launch {
                 productivityFeedViewModel.deleteFeedCardById(card.id)
             }
         }
-        selectedCardId.value = -1
-        showOptionsList.value = false
+
     }
 
     fun showOptions(id: Long) {
@@ -294,9 +297,10 @@ fun ProductivityFeedCard(card: FeedCardDataForUi, onDismiss: (FeedCardDataForUi,
     val anchors = mapOf(0f to 0, sizePx to 1, -sizePx to -1)
     val scope = rememberCoroutineScope()
 
-    val offsetX by animateFloatAsState(targetValue = swipeableState.offset.value, label = "")
+    val offsetX by animateFloatAsState(targetValue = swipeableState.offset.value, label =
+    "offset_${card.id}")
     val rotationAngle by animateFloatAsState(targetValue = (swipeableState.offset.value / sizePx) * 15,
-        label = ""
+        label = "rotation_${card.id}"
     )
 
     val snapBackThreshold = sizePx * 0.3f
@@ -304,6 +308,15 @@ fun ProductivityFeedCard(card: FeedCardDataForUi, onDismiss: (FeedCardDataForUi,
     LaunchedEffect(swipeableState.offset.value) {
         if (swipeableState.offset.value != 0f && abs(swipeableState.offset.value) < snapBackThreshold) {
             swipeableState.snapTo(0)
+        }
+        else if (swipeableState.offset.value > snapBackThreshold) {
+            // Handle accept action
+            optionDetails.optionClickFunction(card)
+            swipeableState.snapTo(0) // Reset the state
+        } else if (swipeableState.offset.value < -snapBackThreshold) {
+            // Handle dismiss action
+            onDismiss(card, true)
+            swipeableState.snapTo(0) // Reset the state
         }
     }
 
@@ -325,12 +338,14 @@ fun ProductivityFeedCard(card: FeedCardDataForUi, onDismiss: (FeedCardDataForUi,
             LaunchedEffect(Unit) {
                 // Handle accept action
                 optionDetails.optionClickFunction(card)
+                swipeableState.snapTo(0) // Reset the state
             }
         } else if (swipeableState.currentValue == -1) {
             // Swiped left (dismiss)
             LaunchedEffect(Unit) {
                 // Handle dismiss action
-                onDismiss(card, false)
+                onDismiss(card, true)
+                swipeableState.snapTo(0) // Reset the state
             }
         }
 
@@ -621,7 +636,24 @@ fun getOptionDetails(context: Context, card: FeedCardDataForUi, showOptionsFun: 
             optionText = "Read more",
             optionClickFunction =
             {
-                Toast.makeText(context, "Read more", Toast.LENGTH_SHORT).show()
+                val emailId = it.extraDescription.split(":", limit = 2)[1].trim()
+                val queryText = it.title
+                if (it.extraDescription.split(":", limit = 2)[0].trim() == "Gmail") {
+                    launchGmailSearch(
+                        searchQuery = queryText,
+                        emailAddress = emailId,
+                        context = context
+                    )
+                }
+                else {
+                    // Assume Microsoft
+                    launchOutlookSearch(
+                        searchQuery = queryText,
+                        emailAddress = emailId,
+                        context = context
+                    )
+                }
+                Toast.makeText(context, "Open:${emailId}\nSearch:${queryText}", Toast.LENGTH_LONG).show()
                 onDismissFun(it, true)
             },
             logoResource = null,

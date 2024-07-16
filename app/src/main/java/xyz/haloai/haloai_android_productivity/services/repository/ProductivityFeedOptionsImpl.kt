@@ -30,7 +30,7 @@ class ProductivityFeedOptionsImpl(private val productivityFeedOptionsFunctions: 
     // Functions used by the Assistant Mode (AI Assistant) to perform tasks like sending emails, scheduling events, etc. for the user
 
     val context = getKoin().get<Context>()
-    val scheduleDbViewModel: ScheduleDbViewModel by inject { parametersOf(context, false) }
+    val scheduleDbViewModel: ScheduleDbViewModel by inject { parametersOf(context) }
     val notesDbViewModel: NotesDbViewModel by inject()
     val openAIViewModel: OpenAIViewModel by inject()
     val ltGoalsViewModel: LTGoalsViewModel by inject()

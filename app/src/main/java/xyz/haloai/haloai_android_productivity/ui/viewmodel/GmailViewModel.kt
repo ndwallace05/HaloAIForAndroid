@@ -17,8 +17,13 @@ class GmailViewModel(private val gmailRepository: GmailRepository) : ViewModel()
         return gmailRepository.getEventsFromEmail(context, emailId, calendarIds)
     }
 
-    suspend fun updateScheduleDbForEmail(scheduleDbViewModel: ScheduleDbViewModel, context: Context, emailId: String, calendarIds: List<String>) {
-        return gmailRepository.updateScheduleDbForEmail(scheduleDbViewModel, context, emailId, calendarIds)
+    suspend fun updateScheduleDbForEmail(context: Context, emailId: String, calendarIds: List<String>) {
+        return gmailRepository.updateScheduleDbForEmail(context, emailId, calendarIds)
     }
+
+    suspend fun checkForNewEmails() {
+        gmailRepository.checkAndProcessNewEmails()
+    }
+
 }
 

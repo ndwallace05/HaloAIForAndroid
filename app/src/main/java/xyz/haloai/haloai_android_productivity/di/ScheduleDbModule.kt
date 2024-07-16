@@ -20,5 +20,20 @@ val scheduleDbModule = module {
     single { get<ScheduleEntriesDatabase>().scheduleEntriesDao() }
     single { ScheduleDbRepository(get()) }
 
-    viewModel { (context: Context, refreshCalendar: Boolean) -> ScheduleDbViewModel(get(), context, refreshCalendar) }
+    // viewModel { (context: Context, refreshDb: Boolean) -> ScheduleDbViewModel(get(), context, refreshDb) }
+
+    viewModel { params ->
+        ScheduleDbViewModel(
+            repository = get(),
+            context = params.get(),
+            refreshDb = params.getOrNull() ?: true
+        )
+    }
+
+    /*viewModel { (parameters: ParametersDefinition) ->
+        para
+        val context = parameters.get<Context>()
+        val booleanParam = parameters.getOrNull<Boolean>() ?: true
+        ScheduleDbViewModel(get(), context, booleanParam)
+    }*/
 }

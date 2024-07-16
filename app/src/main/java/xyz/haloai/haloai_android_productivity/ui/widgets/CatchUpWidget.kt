@@ -63,7 +63,11 @@ class CatchUpWidgetReceiver : GlanceAppWidgetReceiver() {
 class CatchUpWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         provideContent {
-            CatchUpWidgetLayout(context)
+            GlanceTheme {
+                // Text("Hello, Assistant!")
+                CatchUpWidgetLayout(context)
+            }
+            // CatchUpWidgetLayout(context)
         }
     }
 }
@@ -142,7 +146,6 @@ fun CatchUpWidgetLayout(context: Context) {
                         else -> 1
                     }
                     // Title: Start Time - End Time: Event Title
-                    val titleToUse =
                     cardsToShow.add(
                         DataForCatchUpCard(
                             title = event.title,
@@ -309,6 +312,14 @@ fun CatchUpItem(cardData: DataForCatchUpCard) {
                 ),
                 modifier = GlanceModifier.padding(start = 8.dp)
             )
+            /*if (cardData.type == EnumCatchUpCardType.FEED_CARD) {
+                Image(
+                    provider = ImageProvider(R.drawable.tasks),
+                    contentDescription = "Icon",
+                    modifier = GlanceModifier.size(24.dp),
+                    colorFilter = ColorFilter.tint(ColorProvider(fontColor))
+                )
+            }*/
         }
     }
 }

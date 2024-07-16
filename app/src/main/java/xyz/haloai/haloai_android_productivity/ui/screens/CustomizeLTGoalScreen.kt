@@ -184,7 +184,7 @@ fun CustomizeLTGoalScreen(navController: NavController, ltGoalId: String) {
             for (message in _conversation.value.subList(1, _conversation.value.size)) {
                 conversationText += if (message.isUserMessage) "User: \n${message.displayText}\n" else "Assistant: \n${message.completeText}\n"
             }
-            val response = openAIViewModel.getChatGPTResponse(initialSeedPromptForAssistant, conversationText, modelToUse = "gpt-4-turbo", temperature = 0.5)
+            val response = openAIViewModel.getChatGPTResponse(initialSeedPromptForAssistant, conversationText, modelToUse = "gpt-4o", temperature = 0.5)
             // Get Actions if any, and update the conversation
             val potentialActions = response.split("\n")
             var responseToUser = ""
@@ -256,9 +256,9 @@ fun CustomizeLTGoalScreen(navController: NavController, ltGoalId: String) {
         var dateFormatter = SimpleDateFormat("yyyy/MM/dd", Locale.getDefault())
         coroutineScope.launch {
             currentGoalData = ltGoalsViewModel.getLTGoalById(ltGoalId.toLong())
-            var oneYearFromNow = Calendar.getInstance()
+            val oneYearFromNow = Calendar.getInstance()
             oneYearFromNow.add(Calendar.YEAR, 1)
-            var deadlineToUse = currentGoalData!!.deadline ?: oneYearFromNow
+            val deadlineToUse = currentGoalData!!.deadline ?: oneYearFromNow
             firstMessageForGPT = "Below is a some information about the specific long-term goal they need help with:\n" +
                     "Title: ${currentGoalData?.title}\n" +
                     "Context: ${currentGoalData?.context}\n" +

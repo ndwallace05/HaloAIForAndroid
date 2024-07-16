@@ -10,6 +10,7 @@ import com.android.volley.RequestQueue
 import com.android.volley.Response
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
+import com.fleeksoft.ksoup.Ksoup
 import com.microsoft.identity.client.AcquireTokenParameters
 import com.microsoft.identity.client.AcquireTokenSilentParameters
 import com.microsoft.identity.client.AuthenticationCallback
@@ -33,6 +34,7 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 import kotlin.coroutines.resumeWithException
 import kotlin.reflect.KSuspendFunction1
+import kotlin.reflect.KSuspendFunction2
 import kotlin.reflect.KSuspendFunction3
 
 class MicrosoftGraphService(private val context: Context) {
@@ -199,6 +201,82 @@ class MicrosoftGraphService(private val context: Context) {
         mMultipleAccountApp!!.acquireTokenSilentAsync(parameters)
     }
 
+    suspend fun authenticateAccountForEmailsFetch(context: Context, emailId: String, callback:
+    KSuspendFunction2<Result<IAuthenticationResult>, Date, Unit>, coroutineScope: CoroutineScope, date: Date)
+    {
+        while (mMultipleAccountApp == null) {
+            delay(1000)
+        }
+        val accountsList = getMicrosoftAccountsAdded(coroutineScope)
+        val account = accountsList!!.find { it.username == emailId }
+        // Acquire token interactively. It will also create an account object for the silent call as a result (to be obtained by getAccount())
+        val parameters: AcquireTokenSilentParameters = AcquireTokenSilentParameters.Builder()
+            .withScopes(listOf("User.Read", "Calendars.Read", "Mail.Read"))
+            .withCallback(
+                object : AuthenticationCallback {
+                    override fun onSuccess(authenticationResult: IAuthenticationResult) {
+                        coroutineScope.launch(Dispatchers.IO) {
+                            callback(Result.success(authenticationResult), date)
+                        }
+                    }
+
+                    override fun onError(exception: MsalException) {
+                        coroutineScope.launch(Dispatchers.IO) {
+                            callback(Result.failure(exception), date)
+                        }
+                    }
+
+                    override fun onCancel() {
+                        coroutineScope.launch(Dispatchers.IO) {
+                            callback(Result.failure(CancellationException("User cancelled authentication")), date)
+                        }
+                    }
+                })
+            .forAccount(account)
+            .fromAuthority("https://login.microsoftonline.com/common")
+            .build()
+        mMultipleAccountApp!!.acquireTokenSilentAsync(parameters)
+    }
+
+    suspend fun authenticateAccountForConversationThreadFetch(context: Context, emailId: String,
+                                                         callback:
+    KSuspendFunction2<Result<IAuthenticationResult>, String, Unit>, coroutineScope: CoroutineScope,
+                                                              conversationId: String)
+    {
+        while (mMultipleAccountApp == null) {
+            delay(1000)
+        }
+        val accountsList = getMicrosoftAccountsAdded(coroutineScope)
+        val account = accountsList!!.find { it.username == emailId }
+        // Acquire token interactively. It will also create an account object for the silent call as a result (to be obtained by getAccount())
+        val parameters: AcquireTokenSilentParameters = AcquireTokenSilentParameters.Builder()
+            .withScopes(listOf("User.Read", "Calendars.Read", "Mail.Read"))
+            .withCallback(
+                object : AuthenticationCallback {
+                    override fun onSuccess(authenticationResult: IAuthenticationResult) {
+                        coroutineScope.launch(Dispatchers.IO) {
+                            callback(Result.success(authenticationResult), conversationId)
+                        }
+                    }
+
+                    override fun onError(exception: MsalException) {
+                        coroutineScope.launch(Dispatchers.IO) {
+                            callback(Result.failure(exception), conversationId)
+                        }
+                    }
+
+                    override fun onCancel() {
+                        coroutineScope.launch(Dispatchers.IO) {
+                            callback(Result.failure(CancellationException("User cancelled authentication")), conversationId)
+                        }
+                    }
+                })
+            .forAccount(account)
+            .fromAuthority("https://login.microsoftonline.com/common")
+            .build()
+        mMultipleAccountApp!!.acquireTokenSilentAsync(parameters)
+    }
+
     suspend fun callGraphAPIToFetchAllCalendarIDs(authenticationResult: IAuthenticationResult?):
             MutableList<Pair<String, String>> {
 
@@ -301,6 +379,106 @@ class MicrosoftGraphService(private val context: Context) {
         return allEventsJson
     }
 
+    suspend fun callGraphAPIToFetchEmails(authenticationResult: IAuthenticationResult, date: Date, emailsToFetch: Int = 100): JSONObject {
+        // Filter non-junk emails received after the given date
+        // Url: https://graph.microsoft.com/v1.0/me/messages?$filter=(receivedDateTime gt 2024-07-11T00:00:00Z) and not (parentFolderId eq 'JunkEmail')
+
+        val url = URL(MS_GRAPH_ROOT_ENDPOINT + "v1.0/me/messages" + "?\$filter=(receivedDateTime gt ${date.toInstant().toString()}) and not (parentFolderId eq 'JunkEmail')&\$top=${emailsToFetch}")
+        var finalResponseStrOfAllEventsJson = ""
+        with(url.openConnection() as HttpURLConnection) {
+            requestMethod = "GET" // Optional; default is GET
+            setRequestProperty("Authorization", "Bearer ${authenticationResult.accessToken}")
+            println("\nSent 'GET' request to URL: $url; Response Code: $responseCode")
+            inputStream.bufferedReader().use { it.lines().forEach { line ->
+                finalResponseStrOfAllEventsJson += line
+            } }
+        }
+
+        val allParsedEmails: JSONObject = JSONObject(finalResponseStrOfAllEventsJson)
+
+        // Check if there are more emails to fetch, using "odata.nextLink" presence check
+        // Only make upto 5 API calls
+        var maxApiCalls = 5
+        while ((allParsedEmails.has("@odata.nextLink")) and (maxApiCalls > 0)) {
+            // There are more emails to fetch
+            val nextLink = allParsedEmails.getString("@odata.nextLink")
+            val nextLinkUrl = URL(nextLink)
+            var finalResponseStrOfAllEventsJsonNext = ""
+            with(nextLinkUrl.openConnection() as HttpURLConnection) {
+                requestMethod = "GET" // Optional; default is GET
+                setRequestProperty("Authorization", "Bearer ${authenticationResult.accessToken}")
+                println("\nSent 'GET' request to URL: $nextLinkUrl; Response Code: $responseCode")
+                inputStream.bufferedReader().use { it.lines().forEach { line ->
+                    finalResponseStrOfAllEventsJsonNext += line
+                } }
+            }
+            val parsedEmails = JSONObject(finalResponseStrOfAllEventsJsonNext)
+            // Merge the two JSON objects
+            val allEmailsArray = allParsedEmails.getJSONArray("value")
+            val newEmailsArray = parsedEmails.getJSONArray("value")
+            for (i in 0 until newEmailsArray.length()) {
+                allEmailsArray.put(newEmailsArray.getJSONObject(i))
+            }
+            allParsedEmails.put("value", allEmailsArray)
+            maxApiCalls--
+        }
+
+        val parsedEmails = JSONObject(finalResponseStrOfAllEventsJson)
+
+        return parsedEmails
+    }
+
+    suspend fun callGraphAPIToFetchConversationThread(authenticationResult:
+                                                      IAuthenticationResult, conversationId: String): JSONObject {
+        // Filter non-junk emails received after the given date
+        // Url: https://graph.microsoft.com/v1.0/me/messages?$filter=(receivedDateTime gt 2024-07-11T00:00:00Z) and not (parentFolderId eq 'JunkEmail')
+
+        val url = URL(MS_GRAPH_ROOT_ENDPOINT + "v1.0/me/messages" + "?\$filter=conversationId eq " +
+                "'${conversationId}'")
+        var finalResponseStrOfAllEventsJson = ""
+        with(url.openConnection() as HttpURLConnection) {
+            requestMethod = "GET" // Optional; default is GET
+            setRequestProperty("Authorization", "Bearer ${authenticationResult.accessToken}")
+            println("\nSent 'GET' request to URL: $url; Response Code: $responseCode")
+            inputStream.bufferedReader().use { it.lines().forEach { line ->
+                finalResponseStrOfAllEventsJson += line
+            } }
+        }
+
+        val allParsedEmails: JSONObject = JSONObject(finalResponseStrOfAllEventsJson)
+
+        // Check if there are more emails to fetch, using "odata.nextLink" presence check
+        // Only make upto 5 API calls
+        var maxApiCalls = 5
+        while ((allParsedEmails.has("@odata.nextLink")) and (maxApiCalls > 0)) {
+            // There are more emails to fetch
+            val nextLink = allParsedEmails.getString("@odata.nextLink")
+            val nextLinkUrl = URL(nextLink)
+            var finalResponseStrOfAllEventsJsonNext = ""
+            with(nextLinkUrl.openConnection() as HttpURLConnection) {
+                requestMethod = "GET" // Optional; default is GET
+                setRequestProperty("Authorization", "Bearer ${authenticationResult.accessToken}")
+                println("\nSent 'GET' request to URL: $nextLinkUrl; Response Code: $responseCode")
+                inputStream.bufferedReader().use { it.lines().forEach { line ->
+                    finalResponseStrOfAllEventsJsonNext += line
+                } }
+            }
+            val parsedEmails = JSONObject(finalResponseStrOfAllEventsJsonNext)
+            // Merge the two JSON objects
+            val allEmailsArray = allParsedEmails.getJSONArray("value")
+            val newEmailsArray = parsedEmails.getJSONArray("value")
+            for (i in 0 until newEmailsArray.length()) {
+                allEmailsArray.put(newEmailsArray.getJSONObject(i))
+            }
+            allParsedEmails.put("value", allEmailsArray)
+            maxApiCalls--
+        }
+
+        val parsedConversationThread = JSONObject(finalResponseStrOfAllEventsJson)
+
+        return parsedConversationThread
+    }
+
     private suspend fun getMicrosoftAccountsAdded(coroutineScope: CoroutineScope): MutableList<IAccount>? {
         return suspendCancellableCoroutine<MutableList<IAccount>> { continuation ->
             // Authenticate user, then get calendar IDs
@@ -321,20 +499,74 @@ class MicrosoftGraphService(private val context: Context) {
             // Observe LiveData for results
             val observer = object : Observer<MutableList<IAccount>> {
                 override fun onChanged(results: MutableList<IAccount>) {
-                    results.let {
-                        _allAccounts.removeObserver(this)
-                        continuation.resume(it) {
+                    _allAccounts.removeObserver(this)
+                    if (continuation.isActive) {
+                        continuation.resume(results) {
                             continuation.resumeWithException(it)
                         }
                     }
                 }
             }
 
-            _allAccounts.observeForever(observer)
+            coroutineScope.launch(Dispatchers.Main) {
+                _allAccounts.observeForever(observer)
+            }
 
             continuation.invokeOnCancellation {
-                _allAccounts.removeObserver(observer)
+                coroutineScope.launch(Dispatchers.Main) {
+                    _allAccounts.removeObserver(observer)
+                }
             }
         }
+    }
+
+    fun getEmailBody(email: JSONObject): String {
+        var body = email.getJSONObject("body")
+        var bodyType = body.getString("contentType")
+        var bodyText = ""
+        if (bodyType == "text") {
+            bodyText = body.getString("content")
+        }
+        else if (bodyType == "html") {
+            // Parse the html body
+            bodyText = Ksoup.parse(body.getString("content")).text()
+        }
+        return bodyText
+    }
+
+    fun getLast3EmailsBody(conversation: JSONObject, emailId: String): String {
+        var last3EmailsBody = ""
+        val emails = conversation.getJSONArray("value")
+        val allConversationIndexesLengthsToIdxMap = mutableMapOf<Int, Int>()
+        for (i in 0 until emails.length()) {
+            val email = emails.getJSONObject(i)
+            val conversationId = email.getString("conversationIndex")
+            allConversationIndexesLengthsToIdxMap[i] = conversationId.length
+        }
+        // Sort by length, pick top 3 (descending order)
+        val sortedMap = allConversationIndexesLengthsToIdxMap.toList().sortedBy { (_, value) -> value }.toMap()
+        val sortedMapDescending = sortedMap.toList().reversed().toMap()
+        // Take subject of first email (smallest length conversationId)
+        val subject = emails.getJSONObject(sortedMap.keys.toList()[0]).getString("subject")
+
+        val last3EmailsIdx = sortedMapDescending.keys.toList().subList(0, 3.coerceAtMost(sortedMapDescending.size))
+        last3EmailsBody += "Subject: $subject\n\n"
+
+        for (i in last3EmailsIdx) {
+            val email = emails.getJSONObject(i)
+            val from = email.getJSONObject("sender").getJSONObject("emailAddress").getString("address")
+            val to: String
+            if (from != emailId)
+            {
+                to = emailId
+            }
+            else{
+                to = email.getJSONArray("toRecipients").getJSONObject(0).getJSONObject("emailAddress").getString("address")
+            }
+            val body = getEmailBody(email)
+            last3EmailsBody += "From: $from\nTo: $to\nBody: $body\n\n"
+        }
+
+        return last3EmailsBody
     }
 }

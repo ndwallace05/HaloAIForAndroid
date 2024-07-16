@@ -58,6 +58,8 @@ class EmailDbViewModel(private val repository: EmailDbRepository) : ViewModel() 
         val emailList = mutableListOf<String>()
         for (account in accounts) {
             emailList.add(account.name)
+            // Get account id (like u/0 or u/1)
+            // val id = accountManager.getUserData(account, AccountManager.KEY_USERDATA)
         }
         return emailList
     }

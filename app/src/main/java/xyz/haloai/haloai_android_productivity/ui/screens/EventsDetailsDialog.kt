@@ -59,7 +59,7 @@ import java.util.Locale
 @Composable
 fun EventsDetailsDialog(eventId: Long, onDismissRequest: () -> Unit) {
     val context = LocalContext.current
-    val scheduleDbViewModel: ScheduleDbViewModel = koinInject { parametersOf(context, false) }
+    val scheduleDbViewModel: ScheduleDbViewModel = koinInject { parametersOf(context) }
     var coroutineScope: CoroutineScope = rememberCoroutineScope()
     var eventDbEntry: ScheduleEntry? by remember { mutableStateOf(null) }
     LaunchedEffect(Unit) {
