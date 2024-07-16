@@ -3,6 +3,7 @@ package xyz.haloai.haloai_android_productivity.workers
 import android.content.Context
 import androidx.work.Worker
 import androidx.work.WorkerParameters
+import kotlinx.coroutines.runBlocking
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import xyz.haloai.haloai_android_productivity.ui.viewmodel.MiscInfoDbViewModel
@@ -15,7 +16,13 @@ class SuggestedTasksWorker (
 
     override fun doWork(): Result {
         // TODO: Lookup misc info db, see if suggested tasks have been generated, if not, generate.
-
-        return Result.success()
+        return runBlocking {
+            try {
+                // Example: miscInfoDbViewModel.generateSuggestedTasks()
+                Result.success()
+            } catch (e: Exception) {
+                Result.failure()
+            }
+        }
     }
 }

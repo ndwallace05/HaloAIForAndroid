@@ -199,9 +199,7 @@ class MicrosoftGraphRepositoryImplementation(private val microsoftGraphService: 
                 }
             }
 
-            coroutineScope.launch(Dispatchers.Main) {
-                _resultsFromEmailsCallback.observeForever(observer)
-            }
+            _resultsFromEmailsCallback.observeForever(observer)
 
             continuation.invokeOnCancellation {
                 coroutineScope.launch(Dispatchers.Main) {
@@ -238,10 +236,10 @@ class MicrosoftGraphRepositoryImplementation(private val microsoftGraphService: 
                 }
             }
 
-            coroutineScope.launch(Dispatchers.Main) {
+            // coroutineScope.launch(Dispatchers.Main) {
                 // _resultsFromConversationThreadCallback.observeForever(observer)
-                resultLiveData.observeForever(observer)
-            }
+            resultLiveData.observeForever(observer)
+            // }
 
             continuation.invokeOnCancellation {
                 coroutineScope.launch(Dispatchers.Main) {
@@ -454,11 +452,9 @@ class MicrosoftGraphRepositoryImplementation(private val microsoftGraphService: 
     override suspend fun checkAndProcessNewEmails() {
         emailCheckerMutex.withLock {
             try {
-                val lastProcessedDate =
-                    miscInfoDbViewModel.get("lastProcessedDate_Microsoft") as String?
+                val lastProcessedDate = miscInfoDbViewModel.get("lastProcessedDate_Microsoft") as String?
                 val dateToUse: Date
-                val dateFormatter =
-                    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", Locale.getDefault())
+                val dateFormatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", Locale.getDefault())
                 if (lastProcessedDate == null) {
                     // Insert yesterday's date as last processed date
                     dateToUse = Calendar.getInstance().time
@@ -516,6 +512,7 @@ class MicrosoftGraphRepositoryImplementation(private val microsoftGraphService: 
                     "lastProcessedDate_Microsoft",
                     dateFormatter.format(Calendar.getInstance().time)
                 )
+                // delay(1000)
             } catch (e: Exception) {
                 Log.d("MicrosoftGraphRepository", "Error in checkAndProcessNewEmails: ${e.message}")
                 Log.d(

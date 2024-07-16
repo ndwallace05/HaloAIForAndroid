@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException
 import com.google.api.services.calendar.model.Event
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.koin.core.component.KoinComponent
@@ -225,6 +226,7 @@ class GmailRepositoryImpl(private val gmailApiService: GmailService) :
                     "lastProcessedDate_Gmail",
                     dateFormatter.format(Calendar.getInstance().time)
                 )
+                delay(1000) // Sleep for 1 second
             } catch (e: Exception) {
                 Log.d("GmailRepositoryImpl", "Error in checkAndProcessNewEmails: ${e.message}")
                 Log.d("GmailRepositoryImpl", "Error in checkAndProcessNewEmails: ${e.stackTrace}")

@@ -63,7 +63,11 @@ class CatchUpWidgetReceiver : GlanceAppWidgetReceiver() {
 class CatchUpWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         provideContent {
-            CatchUpWidgetLayout(context)
+            GlanceTheme {
+                // Text("Hello, Assistant!")
+                CatchUpWidgetLayout(context)
+            }
+            // CatchUpWidgetLayout(context)
         }
     }
 }

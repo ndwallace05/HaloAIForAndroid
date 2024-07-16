@@ -3,6 +3,7 @@
     android:minWidth="240dp"
     android:minHeight="45dp"
     android:updatePeriodMillis="60000"
+    android:previewImage="@drawable/haloai_logo"
     android:widgetCategory="home_screen"
     android:resizeMode="horizontal|vertical"
     android:targetCellWidth="4"

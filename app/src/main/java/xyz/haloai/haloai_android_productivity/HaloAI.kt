@@ -3,11 +3,15 @@ package xyz.haloai.haloai_android_productivity
 import android.app.Application
 import android.content.Intent
 import androidx.core.content.ContextCompat
+import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.work.Configuration
 import com.azure.identity.ClientSecretCredentialBuilder
 import com.azure.security.keyvault.secrets.SecretClientBuilder
 import com.azure.security.keyvault.secrets.models.KeyVaultSecret
 import io.github.cdimascio.dotenv.dotenv
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -25,13 +29,12 @@ import xyz.haloai.haloai_android_productivity.di.productivityFeedOptionsModule
 import xyz.haloai.haloai_android_productivity.di.scheduleDbModule
 import xyz.haloai.haloai_android_productivity.di.textExtractionFromImageModule
 import xyz.haloai.haloai_android_productivity.di.workManagerModule
+import xyz.haloai.haloai_android_productivity.ui.widgets.AssistantWidget
+import xyz.haloai.haloai_android_productivity.ui.widgets.CatchUpWidget
 import xyz.haloai.haloai_android_productivity.workers.scheduleCalendarUpdateWork
 import xyz.haloai.haloai_android_productivity.workers.scheduleEmailCheckWork
 import xyz.haloai.haloai_android_productivity.workers.scheduleSuggestedTasksWork
-import xyz.haloai.haloai_android_productivity.workers.workerFactory.CalendarUpdateWorkerFactory
 import xyz.haloai.haloai_android_productivity.workers.workerFactory.CombinedWorkerFactory
-import xyz.haloai.haloai_android_productivity.workers.workerFactory.EmailCheckWorkerFactory
-import xyz.haloai.haloai_android_productivity.workers.workerFactory.SuggestedTasksWorkerFactory
 
 class HaloAI: Application(), Configuration.Provider, KoinComponent {
     override fun onCreate() {
@@ -48,6 +51,21 @@ class HaloAI: Application(), Configuration.Provider, KoinComponent {
         applicationContext.scheduleEmailCheckWork()
         applicationContext.scheduleCalendarUpdateWork()
         applicationContext.scheduleSuggestedTasksWork()
+
+        CoroutineScope(Dispatchers.IO).launch {
+            // Update the widgets
+            val manager = GlanceAppWidgetManager(applicationContext)
+            val widget1 = CatchUpWidget()
+            val widget2 = AssistantWidget()
+            val glanceIds = manager.getGlanceIds(widget1.javaClass)
+            glanceIds.forEach { glanceId ->
+                widget1.update(applicationContext, glanceId)
+            }
+            val glanceIds2 = manager.getGlanceIds(widget2.javaClass)
+            glanceIds2.forEach { glanceId ->
+                widget2.update(applicationContext, glanceId)
+            }
+        }
 
         // Get Azure and openAI keys from Azure Key Vault
 
@@ -86,7 +104,6 @@ class HaloAI: Application(), Configuration.Provider, KoinComponent {
                 startScreenshotObserverService()
             }
         }
-
     }
 
     companion object {
@@ -101,15 +118,9 @@ class HaloAI: Application(), Configuration.Provider, KoinComponent {
     // This is where we provide the worker factory to WorkManager
     override val workManagerConfiguration: Configuration
         get() {
-            val emailCheckWorkerFactory: EmailCheckWorkerFactory by inject()
-            val calendarUpdateWorkerFactory: CalendarUpdateWorkerFactory by inject()
-            val suggestedTasksWorkerFactory: SuggestedTasksWorkerFactory by inject()
+            val combinedWorkerFactory: CombinedWorkerFactory by inject()
             return Configuration.Builder()
-                .setWorkerFactory(CombinedWorkerFactory(
-                    emailCheckWorkerFactory,
-                    calendarUpdateWorkerFactory,
-                    suggestedTasksWorkerFactory
-                ))
+                .setWorkerFactory(combinedWorkerFactory)
                 .build()
         }
 }

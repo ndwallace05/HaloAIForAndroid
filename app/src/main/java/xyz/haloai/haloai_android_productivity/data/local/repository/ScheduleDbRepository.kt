@@ -485,7 +485,6 @@ class ScheduleDbRepository(private val scheduleDao: ScheduleEntriesDao): KoinCom
     {
         // Check if the mutex was locked in the last 5 minutes
         updateMutex.withLock {
-
             val currentTime = System.currentTimeMillis()
             if (currentTime - lastUpdateMutexLockedTime < 300000) // 5 minutes
             {

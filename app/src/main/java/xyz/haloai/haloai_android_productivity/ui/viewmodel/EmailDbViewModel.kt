@@ -59,7 +59,7 @@ class EmailDbViewModel(private val repository: EmailDbRepository) : ViewModel() 
         for (account in accounts) {
             emailList.add(account.name)
             // Get account id (like u/0 or u/1)
-            val id = accountManager.getUserData(account, AccountManager.KEY_USERDATA)
+            // val id = accountManager.getUserData(account, AccountManager.KEY_USERDATA)
         }
         return emailList
     }

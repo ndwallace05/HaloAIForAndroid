@@ -1,40 +1,56 @@
 package xyz.haloai.haloai_android_productivity.workers
 
 import android.content.Context
+import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import java.util.concurrent.TimeUnit
 
 fun Context.scheduleEmailCheckWork() {
-    val emailCheckWorkRequest = PeriodicWorkRequestBuilder<EmailCheckWorker>(30, TimeUnit.MINUTES)
+    val constraints = Constraints.Builder()
+        .setRequiredNetworkType(NetworkType.CONNECTED)
+        .build()
+
+    val emailCheckWorkRequest = PeriodicWorkRequestBuilder<EmailCheckWorker>(30, TimeUnit
+        .MINUTES).setConstraints(constraints)
         .build()
 
     WorkManager.getInstance(this).enqueueUniquePeriodicWork(
         "EmailCheckWork",
-        ExistingPeriodicWorkPolicy.KEEP,
+        ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE,
         emailCheckWorkRequest
     )
 }
 
 fun Context.scheduleCalendarUpdateWork() {
-    val calendarUpdateWorkRequest = PeriodicWorkRequestBuilder<CalendarUpdateWorker>(1, TimeUnit.HOURS)
+    val constraints = Constraints.Builder()
+        .setRequiredNetworkType(NetworkType.CONNECTED)
+        .build()
+
+    val calendarUpdateWorkRequest = PeriodicWorkRequestBuilder<CalendarUpdateWorker>(1, TimeUnit.HOURS).setConstraints(constraints)
         .build()
 
     WorkManager.getInstance(this).enqueueUniquePeriodicWork(
         "CalendarUpdateWork",
-        ExistingPeriodicWorkPolicy.KEEP,
+        ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE,
         calendarUpdateWorkRequest
     )
 }
 
 fun Context.scheduleSuggestedTasksWork() {
-    val suggestedTasksWorkRequest = PeriodicWorkRequestBuilder<SuggestedTasksWorker>(6, TimeUnit.HOURS)
+    val constraints = Constraints.Builder()
+        .setRequiredNetworkType(NetworkType.CONNECTED)
+        .build()
+
+
+    val suggestedTasksWorkRequest = PeriodicWorkRequestBuilder<SuggestedTasksWorker>(6, TimeUnit.HOURS).setConstraints(constraints)
         .build()
 
     WorkManager.getInstance(this).enqueueUniquePeriodicWork(
         "SuggestedTasksWork",
-        ExistingPeriodicWorkPolicy.KEEP,
+        ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE,
         suggestedTasksWorkRequest
     )
 }

@@ -21,7 +21,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import xyz.haloai.haloai_android_productivity.ui.viewmodel.TextExtractionFromImageViewModel
+import xyz.haloai.haloai_android_productivity.ui.viewmodel.AssistantModeFunctionsViewModel
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
@@ -29,7 +29,7 @@ import java.io.IOException
 class ScreenshotObserverService: Service(), KoinComponent {
 
     private lateinit var screenshotObserver: ContentObserver
-    private val textExtractionFromImageViewModel: TextExtractionFromImageViewModel by inject()
+    private val assistantModeFunctionsViewModel: AssistantModeFunctionsViewModel by inject()
 
     override fun onCreate() {
         super.onCreate()
@@ -140,13 +140,12 @@ class ScreenshotObserverService: Service(), KoinComponent {
                     // Add your further processing logic here
                     Log.d("ScreenshotObserver", "Bitmap created for screenshot: $filePath")
                     val coroutineScope = CoroutineScope(Dispatchers.IO)
-                    val text = textExtractionFromImageViewModel.getTextFromBitmap(bitmap!!, coroutineScope)
-                    Log.d("ScreenshotObserver", "Extracted text: $text")
+                    assistantModeFunctionsViewModel.processScreenshot(bitmap)
+                    // val text = textExtractionFromImageViewModel.getTextFromBitmap(bitmap!!, coroutineScope)
+                    // Log.d("ScreenshotObserver", "Extracted text: $text")
                 } else {
                     Log.d("ScreenshotObserver", "Failed to create bitmap for screenshot after $maxRetries retries: $filePath")
                 }
-
-
 
             }
         }

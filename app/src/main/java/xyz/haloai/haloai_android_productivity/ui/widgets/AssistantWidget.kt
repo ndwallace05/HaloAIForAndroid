@@ -35,6 +35,7 @@ class AssistantWidgetReceiver : GlanceAppWidgetReceiver() {
 class AssistantWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         provideContent {
+            // Text("Hello, Assistant!")
             AssistantWidgetLayout(context)
         }
     }

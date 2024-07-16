@@ -5,7 +5,7 @@ import androidx.work.Worker
 import androidx.work.WorkerParameters
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.koin.core.parameter.parametersOf
@@ -28,9 +28,13 @@ class CalendarUpdateWorker(
         // End date is two weeks after today
         endDate.time = endDate.time + 14 * 24 * 60 * 60 * 1000
         // Update the schedule database
-        coroutineScope.launch {
-            scheduleDbViewModel.updateScheduleDb(context, coroutineScope, startDate, endDate)
+        return runBlocking {
+            try {
+                scheduleDbViewModel.updateScheduleDb(context, coroutineScope, startDate, endDate)
+                Result.success()
+            } catch (e: Exception) {
+                Result.failure()
+            }
         }
-        return Result.success()
     }
 }

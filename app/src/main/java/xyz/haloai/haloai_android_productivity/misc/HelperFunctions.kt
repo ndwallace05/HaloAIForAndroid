@@ -27,3 +27,17 @@ fun launchGmailSearch(searchQuery: String, emailAddress: String, context: Contex
 
     context.startActivity(intent)
 }
+
+fun launchOutlookSearch(searchQuery: String, emailAddress: String, context: Context) {
+    val intent = Intent(Intent.ACTION_MAIN)
+
+    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    intent.addCategory(Intent.CATEGORY_APP_EMAIL)
+
+    // Add uri to open a specific account
+    // intent.data = android.net.Uri.parse("mailto:")
+    intent.`package` = "com.microsoft.office.outlook"
+    // intent.putExtra("u", emailAddress)
+
+    context.startActivity(intent)
+}

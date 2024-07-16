@@ -5,7 +5,7 @@ import androidx.work.Worker
 import androidx.work.WorkerParameters
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import xyz.haloai.haloai_android_productivity.ui.viewmodel.GmailViewModel
@@ -21,12 +21,14 @@ class EmailCheckWorker(
     val coroutineScope = CoroutineScope(Dispatchers.IO)
 
     override fun doWork(): Result {
-        coroutineScope.launch {
-            gmailViewModel.checkForNewEmails()
-            microsoftViewModel.checkForNewEmails()
+        return runBlocking {
+            try {
+                gmailViewModel.checkForNewEmails()
+                microsoftViewModel.checkForNewEmails()
+                Result.success()
+            } catch (e: Exception) {
+                Result.failure()
+            }
         }
-
-        // Return Result.success() if the work finished successfully
-        return Result.success()
     }
 }

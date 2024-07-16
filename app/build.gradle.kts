@@ -41,7 +41,7 @@ android {
         compose = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.1"
+        kotlinCompilerExtensionVersion = "1.5.14"
     }
     packaging {
         resources {
@@ -125,6 +125,7 @@ dependencies {
     implementation(libs.ksoup)
     // Glance for Android
     implementation(libs.androidx.glance.appwidget)
+    implementation(libs.androidx.glance.material)
     implementation(libs.androidx.runtime.livedata)
     // WorkManager
     implementation(libs.androidx.work.runtime.ktx)
