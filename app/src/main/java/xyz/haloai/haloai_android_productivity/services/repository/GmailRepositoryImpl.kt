@@ -194,14 +194,16 @@ class GmailRepositoryImpl(private val gmailApiService: GmailService) :
                                 continue
                             }
                             val emailBody = gmailApiService.getLast3EmailsBody(conversationThread, emailId)
+                            val subject = email.payload.headers.find { it.name == "Subject" }!!.value
+                            val sender = email.payload.headers.find { it.name == "From" }!!.value
 
 
                             productivityFeedViewModel.processEmailContent(
                                 emailId = emailId,
                                 emailType = enumEmailType.GMAIL,
-                                emailSubject = email.payload.headers.find { it.name == "Subject" }!!.value,
+                                emailSubject = subject,
                                 emailSnippet = email.snippet,
-                                emailSender = email.payload.headers.find { it.name == "From" }!!.value,
+                                emailSender = sender,
                                 emailBody = emailBody
                             )
                             // Process the email

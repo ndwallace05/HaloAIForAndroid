@@ -97,7 +97,9 @@ class MicrosoftGraphRepositoryImplementation(private val microsoftGraphService: 
                 }
             }
 
-            _resultsFromCalIdCallback.observeForever(observer)
+            coroutineScope.launch(Dispatchers.Main) {
+                _resultsFromCalIdCallback.observeForever(observer)
+            }
 
             continuation.invokeOnCancellation {
                 _resultsFromCalIdCallback.removeObserver(observer)
@@ -199,7 +201,9 @@ class MicrosoftGraphRepositoryImplementation(private val microsoftGraphService: 
                 }
             }
 
-            _resultsFromEmailsCallback.observeForever(observer)
+            coroutineScope.launch(Dispatchers.Main) {
+                _resultsFromEmailsCallback.observeForever(observer)
+            }
 
             continuation.invokeOnCancellation {
                 coroutineScope.launch(Dispatchers.Main) {
@@ -238,8 +242,9 @@ class MicrosoftGraphRepositoryImplementation(private val microsoftGraphService: 
 
             // coroutineScope.launch(Dispatchers.Main) {
                 // _resultsFromConversationThreadCallback.observeForever(observer)
+            coroutineScope.launch(Dispatchers.Main) {
             resultLiveData.observeForever(observer)
-            // }
+            }
 
             continuation.invokeOnCancellation {
                 coroutineScope.launch(Dispatchers.Main) {

@@ -35,13 +35,15 @@ class AssistantModeFunctionsImpl(private val assistantModeFunctions: AssistantMo
         {
             val arguments: MutableList<String> = mutableListOf()
             for (args in instruction.params){
-                //if argument is of format $1, $2, etc (using regex).
-                val regex = Regex("\\$\\d+")
-                if (regex.containsMatchIn(args.value)) {
+                // if argument is of format $1, $2, etc (using regex). (has to be a number, and
+                // start with $)
+                // val regex = Regex("\\$\\d+") // This is matching random numbers inside the string. We need to match only the numbers at the end of the string.
+                val regex = Regex("^\\$\\d+$")
+                if (regex.matches(args.value.trim())) {
                     arguments.add(variableMap[args.value] ?: "")
                 }
                 else {
-                    arguments.add(args.value)
+                    arguments.add(args.value.trim())
                 }
 
             }
@@ -92,6 +94,12 @@ class AssistantModeFunctionsImpl(private val assistantModeFunctions: AssistantMo
                         name = arguments[0].toString(),
                         email = arguments[1].toString(),
                         phone = arguments[2].toString()
+                    )
+                }
+                EnumFunctionTypes.CREATE_LT_GOAL -> {
+                    assistantModeFunctions.createLtGoal(
+                        goalText = arguments[0].toString(),
+                        deadline = arguments[1].toString()
                     )
                 }
             }

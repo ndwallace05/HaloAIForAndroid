@@ -45,15 +45,25 @@ class AssistantModeFunctions(private val context: Context): KoinComponent {
             "You are a helpful personal assistant. You are a productivity focused assistant, with access to the following functions:  \n" +
                     "1. create_reminder(string reminderText, string dateAndTimeForReminder): This will create a reminder with the given text at the given time. The datetime should be in \"YYYY-MM-DD HH:MM:SS\" format.\n" +
                     "2. create_unscheduled_reminder(string reminderText): This will create an unscheduled reminder. \n" +
-                    "3. respond_to_user(string responseText): This will send the response back to the user. Use it to ask for details or tell the user what you did.  \n" +
+                    "3. respond_to_user(string responseText): This will send the response back to the user. Use it to ask for details or tell the user what you did. Keep it brief and concise.  \n" +
                     "4. get_note_titles(): Gets a note title. [Will return a string value]  \n" +
                     "5. add_to_note(string noteText, string noteTitle): Adds the noteText to the note with title noteTitle.  \n" +
                     "6. ask_ai(string prompt): Use this to ask an AI Agent to perform a task. [Will return a string value]  \n" +
                     "7. summarize_text(): Give a summary of the text which can be used for notes or general description of tasks and events. [ returns a string value] \n" +
-                    "8. get_contact(string name): Search for contact details and get a number and email. \n" +
+                    "8. create_lt_goal(string goalText, string deadline): Returns nothing.\n" +
+                    "This will create a long term goal (things like studying for giving the GRE, " +
+                    "learning a new instrument, planning to study for an exam, etc. are long-term " +
+                    "goals). The deadline is defaulted " +
+                    "to one year from now if no other information is presented." +
+                    " \n" +
+                    "The datetime should be a string in \"YYYY-MM-DD HH:MM:SS\" format, and contain nothing else." +
+                    //"8. get_contact(string name): Search for contact details and get a number " + "and email. \n" +
                     "9. create_calendar_event(string text, string description, string startDateTime, string endDateTime): This will add a calendar event to the users calendar using the details provided. The datetime should be in \"YYYY-MM-DD HH:MM:SS\" format.\n" +
-                    "10. save_contact(string name, string email, string number): This stores the contacts details mentioned in user's device. \n" +
-                    "11. get_available_times(string day, string currentDateTime): This gives a list of available times that the user is free on the specific day mentioned [returns an object with startDatetime and endDatetime]. The datetime should be in \"YYYY-MM-DD HH:MM:SS\" format. \n" +
+                    //"10. save_contact(string name, string email, string number): This stores
+                    // the contacts details mentioned in user's device. \n" +
+                    //"11. get_available_times(string day, string currentDateTime): This gives a " +
+                    //"list of available times that the user is free on the specific day
+                    // mentioned [returns an object with startDatetime and endDatetime]. The datetime should be in \"YYYY-MM-DD HH:MM:SS\" format. \n" +
                     "Your job is to output a series of function calls from the functions given above to help the user complete their task. \n" +
                     "Remember, you can only help with productivity related tasks. \n" +
                     "If the user does not give any indication of what they wanted you to do, you can assume they wanted to add it to their notes. \n" +
@@ -73,8 +83,8 @@ class AssistantModeFunctions(private val context: Context): KoinComponent {
                     "add_to_note(“\$userInput”, \$2)  \n" +
                     "respond_to_user(“I’m adding this to \$2”) \n" +
                     "Note, you can refer to the output of certain functions by using the \$<varNum> notation, which will be an int like \$1, \$2 and so on and the original user input using \$userInput. \n" +
-                    "Question: it is the prompt that we will pass\n" +
-                    "Answer: you have to give\n",
+                    "Ensure you provide a response to the user, and tell them what you are doing. Keep it brief and concise.\n"
+                    ,
             conversation.last().toString(),
             modelToUse = "gpt-4o",
             temperature = 0.0
@@ -91,7 +101,9 @@ class AssistantModeFunctions(private val context: Context): KoinComponent {
         val currentDateTime = getCurrentTimeFormatted()
         val initialPromptText = "You are a helpful personal assistant. You are a productivity focused assistant, with access to the following functions:  \n" +
                 "1. create_reminder(string reminderText, string dateAndTimeForReminder): Returns nothing.\n" +
-                "This will create a reminder with the given text at the given time. The datetime should be in \"YYYY-MM-DD HH:MM:SS\" format. \n" +
+                "This will create a reminder with the given text at the given time. The datetime " +
+                "should be a string in \"YYYY-MM-DD HH:MM:SS\" format, and contain nothing else. " +
+                "\n" +
                 "2. create_unscheduled_reminder(string reminderText): Returns nothing.\n" +
                 "This will create an unscheduled reminder. \n" +
                 "3. get_note_titles(): Returns string.\n" +
@@ -101,21 +113,41 @@ class AssistantModeFunctions(private val context: Context): KoinComponent {
                 "5. ask_ai(string prompt): Returns string.\n" +
                 "Use this to ask an AI Agent to perform a task.\n" +
                 "6. summarize_text(): Returns string.\n" +
-                "Give a summary of the text which can be used for notes or general description of tasks and events.\n" +
-                "7. get_contact(string name): Returns string.\n" +
-                "Search for contact details and get a number and email. (separated by \"<DELIM>\")\n" +
-                "8. create_calendar_event(string text, string description, string startDateTime, string endDateTime): Returns nothing.\n" +
-                "This will add a calendar event to the users calendar using the details provided. The datetimes should be in \"YYYY-MM-DD HH:MM:SS\" format.\n" +
-                "9. save_contact(string name, string email, string number): Returns nothing.\n" +
-                "This stores the contacts details mentioned in user's device. \n" +
-                "10. get_available_times(string day, string currentDateTime): Returns string.\n" +
-                "This gives a list of available times that the user is free on the specific day mentioned [returns an object with startDatetime and endDatetime]. The datetime should be in \"YYYY-MM-DD HH:MM:SS\" format. Returns a blob about when the user is free (will need to be parsed by ai).\n" +
+                "Give a summary of the text which can be used for notes or general description of" +
+                " tasks and events.\n" +
+                // "7. get_contact(string name): Returns string.\n" +
+                // "Search for contact details and get a number and email. (separated by " +
+                // "\"<DELIM>\")\n" +
+                "7. create_calendar_event(string text, string description, string startDateTime, " +
+                "string endDateTime): Returns nothing.\n" +
+                "This will add a calendar event to the users calendar using the details provided." +
+                " The datetimes should be a string in \"YYYY-MM-DD HH:MM:SS\" format, and contain nothing else." +
+                "8. create_lt_goal(string goalText, string deadline): Returns nothing.\n" +
+                "This will create a long term goal (things like studying for giving the GRE, " +
+                "learning a new instrument, planning to study for an exam, etc. are long-term " +
+                "goals). The deadline is defaulted " +
+                "to one year from now if no other information is presented." +
+                " \n" +
+                "The datetime should be a string in \"YYYY-MM-DD HH:MM:SS\" format, and contain nothing else." +
+                // "9. save_contact(string name, string email, string number): Returns nothing.\n" +
+                // "This stores the contacts details mentioned in user's device. \n" +
+                // "10. get_available_times(string day, string currentDateTime): Returns string
+                // .\n" +
+                // "This gives a list of available times that the user is free on the specific day
+                // " +
+                // "mentioned [returns an object with startDatetime and endDatetime]. The
+                // datetimes \" +\n" +
+                // "                \"should be a string in \"YYYY-MM-DD HH:MM:SS\" format, and " +
+                //"contain nothing else. Returns a blob about when the user is free (will need to
+                // be parsed by ai).\n" +
                 "\n" +
                 "INSTRUCTIONS:\n" +
                 "- You will be given text extracted from a screenshot the user has taken of their phone, and output a series of function calls from the functions given above to help the user complete their task. You can perform multiple tasks.\n" +
                 "- Remember, you can only help with productivity related tasks. \n" +
                 "- If it is generic information on the screen that can't be converted to an event, task, reminder or contact, you can assume they wanted to add it to their notes. \n" +
-                "- The current time is 2024-07-15 11:30:18 PM, you can use this time as reference where you have to calculate the time required and make sure to keep all the datetime format the same.\n" +
+                "- The current time is +" +
+                currentDateTime +
+                ", you can use this time as reference where you have to calculate the time required and make sure to keep all the datetime format the same.\n" +
                 "- Use your best judgement to decide if adding a reminder or adding to notes would be better. \n" +
                 "- Don't produce any comments in output. \n" +
                 "- Don't create a note if you are creating events/tasks/reminders/etc.\n" +
@@ -236,7 +268,7 @@ class AssistantModeFunctions(private val context: Context): KoinComponent {
     }
 
     fun getContact(name: String): String {
-        return "Contact details for $name: 123-456-7890"
+        return "123-456-7890"
     }
 
     fun createCalendarEvent(
@@ -261,10 +293,27 @@ class AssistantModeFunctions(private val context: Context): KoinComponent {
         return "Contact saved: $name, Email: $email, Phone: $phone"
     }
 
+    fun createLtGoal(goalText: String, deadline: String): String {
+        CoroutineScope(Dispatchers.IO).launch {
+            // The date is in "YYYY-MM-DD HH:MM:SS" format
+            val deadlineAsDate = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).parse(deadline)
+            productivityFeedViewModel.insertFeedCard(
+                title = goalText,
+                description = "Long Term Goal",
+                extraDescription = "Deadline: $deadline",
+                deadline = deadlineAsDate,
+                importanceScore = 4,
+                primaryActionType = enumFeedCardType.POTENTIAL_LTGOAL
+            )
+        }
+
+        return "Long term goal created for '$goalText' with deadline $deadline"
+    }
+
     fun getAvailableTimes(day: String, currentDateTime: String): String {
         // TODO: Fetch available times from the schedule database after asking for an update
         val date =
-            SimpleDateFormat("yyyy-MM-dd hh:mm:ss a", Locale.getDefault()).parse(currentDateTime)
+            SimpleDateFormat("yyyy-MM-dd hh:mm:ss", Locale.getDefault()).parse(currentDateTime)
         val formattedDate =
             SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(date)
         return "Available times on $day: $formattedDate"
@@ -283,6 +332,7 @@ class AssistantModeFunctions(private val context: Context): KoinComponent {
             "ask_ai" -> EnumFunctionTypes.ASK_AI
             "get_contact" -> EnumFunctionTypes.GET_CONTACT
             "save_contact" -> EnumFunctionTypes.SAVE_CONTACT
+            "create_lt_goal" -> EnumFunctionTypes.CREATE_LT_GOAL
             // "convert_chat_to_function" -> EnumFunctionTypes.CONVERT_CHAT_TO_FUNCTION
             else -> throw IllegalArgumentException("Unknown function name: $input")
         }
@@ -322,7 +372,12 @@ class AssistantModeFunctions(private val context: Context): KoinComponent {
                 val funcName = matcher_2.group(1)
                 val args = matcher_2.group(2)
 
-                val argsList = args.split(",").map { it.trim().trim('"') }
+                // val argsList = args.split(",").map { it.trim().trim('"') }
+                val pattern = Regex("""\$\d+|".*?"""") // Matches $1, $2, $3, etc. and "string"
+                val argsList = pattern.findAll(args?.toString() ?: "").map { match ->
+                    match.value.trim('"')
+                }.toList()
+
                 val paramsMap = argsList.mapIndexed { index, arg -> "arg$index" to arg }.toMap()
 
                 val functionType = getFunctionType(input = funcName)
@@ -359,5 +414,6 @@ enum class EnumFunctionTypes {
     SUMMARIZE_TEXT,
     ASK_AI,
     GET_CONTACT,
-    SAVE_CONTACT
+    SAVE_CONTACT,
+    CREATE_LT_GOAL
 }

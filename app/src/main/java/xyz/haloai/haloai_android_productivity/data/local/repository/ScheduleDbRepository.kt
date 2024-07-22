@@ -63,6 +63,37 @@ class ScheduleDbRepository(private val scheduleDao: ScheduleEntriesDao): KoinCom
         }
     }
 
+    suspend fun postponeTaskToTomorrow(id: Long) {
+        withContext(Dispatchers.IO) {
+            val task = scheduleDao.getById(id)
+            if (task != null)
+            {
+                val calendar = Calendar.getInstance()
+                calendar.time = task.startTime!!
+                calendar.add(Calendar.DATE, 1)
+                val newStartTime = calendar.time
+                if (task.endTime == null)
+                {
+                    updateScheduleEntryWithOnlyGivenFields(
+                        id = id,
+                        startTime = newStartTime
+                    )
+                }
+                else {
+                    // If the task has an end time, add 1 day to that as well
+                    calendar.time = task.endTime
+                    calendar.add(Calendar.DATE, 1)
+                    val newEndTime = calendar.time
+                    updateScheduleEntryWithOnlyGivenFields(
+                        id = id,
+                        startTime = newStartTime,
+                        endTime = newEndTime
+                    )
+                }
+            }
+        }
+    }
+
     suspend fun getTasksBetween(start: Date, end: Date): List<ScheduleEntry> = withContext(
         Dispatchers.IO)
     {

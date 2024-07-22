@@ -56,13 +56,14 @@ import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
-import org.koin.java.KoinJavaComponent.inject
 import xyz.haloai.haloai_android_productivity.R
+import xyz.haloai.haloai_android_productivity.data.local.entities.enumEventType
 import xyz.haloai.haloai_android_productivity.data.ui.theme.HaloAI_Android_ProductivityTheme
 import xyz.haloai.haloai_android_productivity.ui.screens.TaskDetailsDialog
 import xyz.haloai.haloai_android_productivity.ui.viewmodel.ScheduleDbViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.TimeZone
 
 @Composable
 fun TasksScreen(navController: NavController) {
@@ -258,7 +259,7 @@ fun TaskList(tasks: List<TaskDataForUi>, onDelete: (TaskDataForUi) -> Unit = {},
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskItem(task: TaskDataForUi, onDelete: (TaskDataForUi) -> Unit = {}, modifier: Modifier, context: Context) {
-    var isChecked by remember { mutableStateOf(false) }
+    var isChecked by remember { mutableStateOf(task.isChecked) }
     val scheduleDbViewModel: ScheduleDbViewModel = koinViewModel { parametersOf(context) }
     val coroutineScope = rememberCoroutineScope()
     var showDatePicker by remember { mutableStateOf(false) }
@@ -270,13 +271,28 @@ fun TaskItem(task: TaskDataForUi, onDelete: (TaskDataForUi) -> Unit = {}, modifi
             confirmButton = {
                 TextButton(onClick = {
                     showDatePicker = false
-                    val selectedDateMillis = datePickerState.selectedDateMillis ?: return@TextButton
+                    var selectedDateMillis = datePickerState.selectedDateMillis ?: return@TextButton
+                    // This is in UTC, adjust to local time
+                    selectedDateMillis -= TimeZone.getDefault().getOffset(selectedDateMillis)
+                    // Set time to 8 AM
+                    val calendar = java.util.Calendar.getInstance().apply {
+                        timeZone = TimeZone.getDefault()
+                        timeInMillis = selectedDateMillis
+                        set(java.util.Calendar.HOUR_OF_DAY, 8)
+                        set(java.util.Calendar.MINUTE, 0)
+                        set(java.util.Calendar.SECOND, 0)
+                        set(java.util.Calendar.MILLISECOND, 0)
+                    }
+                    selectedDateMillis = calendar.timeInMillis
                     coroutineScope.launch {
                         scheduleDbViewModel.updateScheduleEntryWithOnlyGivenFields(
-                            startTime = Date(selectedDateMillis),
+                            startTime = calendar.time,
+                            type = enumEventType.SCHEDULED_TASK,
                             id = task.id
                         )
                     }
+                    // Update the task start date
+                    task.startDate = Date(selectedDateMillis)
                 }) {
                     Text("OK")
                 }
@@ -399,6 +415,6 @@ data class TaskDataForUi(
     val taskName: String,
     val taskDescription: String,
     val isChecked: Boolean,
-    val startDate: Date?
+    var startDate: Date?
 )
 
