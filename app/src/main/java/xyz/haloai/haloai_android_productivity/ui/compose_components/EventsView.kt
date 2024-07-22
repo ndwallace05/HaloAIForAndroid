@@ -364,7 +364,18 @@ private fun splitEvents(events: List<EventDataForUI>): List<PositionedEvent> {
 }
 
 private fun PositionedEvent.overlapsWith(other: PositionedEvent): Boolean {
-    return date == other.date && start < other.end && end > other.start
+    // Return true if the events are on the same day and overlap in time
+    var overlap = false
+    if (date == other.date) {
+        if (start < other.start && end > other.start) { // Event starts before other event and ends after other event starts
+            overlap = true
+        }
+        else if (start > other.start && start < other.end) { // Event starts after other event starts and before other event ends
+            overlap = true
+        }
+    }
+
+    return overlap
 }
 
 private fun List<PositionedEvent>.timesOverlapWith(event: PositionedEvent): Boolean {

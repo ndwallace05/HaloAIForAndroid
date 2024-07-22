@@ -1,6 +1,8 @@
 package xyz.haloai.haloai_android_productivity.services.repository
 
 import android.content.Context
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.koin.core.parameter.parametersOf
@@ -57,13 +59,14 @@ class ProductivityFeedOptionsImpl(private val productivityFeedOptionsFunctions: 
         // Get content to add to task
         val promptText = "You are a helpful assistant. Given some content that the user wants to " +
                 "add to their tasks, format a task that can be added to an existing task. Return " +
-                "the title and content of the task in the format 'Title: <title>\nDescription: " +
-                "<description>\n Date: <date>'. Keep it short and concise. Do not generate any additional text, " +
-                "and ensure that the title and description are separated by a newline. Format the date as 'YYYY-MM-DD'. If there is no date that the task is due, return Date: -1"
+                "the title and content of the task in the following format:\nTitle: " +
+                "<title>\nDescription: " +
+                "<description>\n Date: <date>\n\nKeep it short and concise. Do not generate any " +
+                "additional text. Format the date as 'YYYY-MM-DD'. If there is no date that the " +
+                "task is due, return -1 for the date field."
         val contextText = "Title: $title\nDescription: $description\nExtra Description: " +
                 "$extraDescription\nDeadline: $deadline\nPriority: $priority"
-        val responseText = openAIViewModel.getChatGPTResponse(promptText, contextText, "gpt-3" +
-                ".5-turbo-1106", 0.5)
+        val responseText = openAIViewModel.getChatGPTResponse(promptText, contextText, temperature = 0.5)
         // Parse the response
         val taskTitle = responseText.substringAfter("Title: ").substringBefore("Description: ")
         val taskDescription = responseText.substringAfter("Description: ").substringBefore("Date: ")
@@ -103,20 +106,20 @@ class ProductivityFeedOptionsImpl(private val productivityFeedOptionsFunctions: 
         description: String,
         extraDescription: String?,
         context: Context
-    ) {
+    ) = withContext(Dispatchers.IO) {
         // Add an event to the calendar
         // Get content to add to event
         val currentTime = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).format(Date())
         val promptText = "You are a helpful assistant. Given some content that the user wants to " +
                 "add to their calendar as an event, format an event that can be added to the " +
-                "calendar. Return the title and description of the event in the format 'Title: " +
-                "<title>\nDescription: <description>\nStart Time: <startTime>\n End Time: <endTime>'. Keep it short and concise. Do not generate " +
+                "calendar. Return the title and description of the event in the following format:\nTitle: " +
+                "<title>\nDescription: <description>\nStart Time: <startTime>\n End Time: <endTime>\n\nKeep it short and concise. Do not generate " +
                 "any additional text, and ensure that the title and description are separated by a " +
-                "newline. Format the start and end time as 'YYYY-MM-DDTHH:MM:SS'. If there is no end time specified, set it to the same as the start time. If there is no start time specified, set it to 30 mins from the current time ($currentTime)"
+                "newline. Format the start and end time as 'YYYY-MM-DDTHH:MM:SS'.\nIf there is no end time specified, set it to 30 mins from the start time.\nIf there is no start time specified, set it to 30 mins from the current time, which is $currentTime."
         val contextText = "Title: $title\nDescription: $description\nExtra Description: " +
                 "$extraDescription"
         val responseText = openAIViewModel.getChatGPTResponse(promptText, contextText, "gpt-3" +
-                ".5-turbo-1106", 0.5)
+                ".5-turbo-1106")
         // Parse the response
         val eventTitle = responseText.substringAfter("Title: ").substringBefore("Description: ")
         val eventDescription = responseText.substringAfter("Description: ").substringBefore("Start Time: ")
@@ -125,7 +128,7 @@ class ProductivityFeedOptionsImpl(private val productivityFeedOptionsFunctions: 
         val parsedStartDateTime = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).parse(startTime)
         val parsedEndDateTime = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).parse(endTime)
 
-        scheduleDbViewModel.insertOrUpdate(
+        val idx = scheduleDbViewModel.insertOrUpdate(
             title = eventTitle,
             description = eventDescription,
             startTime = parsedStartDateTime,
@@ -133,6 +136,7 @@ class ProductivityFeedOptionsImpl(private val productivityFeedOptionsFunctions: 
             context = context,
             sourceEmailId = "ProductivityFeed"
         )
+
     }
 
 }

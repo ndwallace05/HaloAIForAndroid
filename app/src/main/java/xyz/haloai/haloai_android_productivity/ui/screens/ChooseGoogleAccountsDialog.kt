@@ -156,7 +156,8 @@ fun ChooseGoogleAccountsDialog(onDismissRequest: () -> Unit) {
                                             isLoading = false
                                             Toast.makeText(
                                                 context,
-                                                "Error fetching calendar IDs",
+                                                e.message,
+                                                //"Error fetching calendar IDs",
                                                 Toast.LENGTH_SHORT
                                             ).show()
                                         }

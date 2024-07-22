@@ -18,6 +18,7 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -71,6 +72,11 @@ class ScreenshotObserverService: Service(), KoinComponent {
     private fun startScreenshotObserver() {
         val handler = Handler(Looper.getMainLooper())
         screenshotObserver = object : ContentObserver(handler) {
+            private var lastScreenshotPath: String? = null
+            private var lastScreenshotTime: Long = 0
+            private var lastScreenshotFileSize: Long = 0
+            private var handlerToken = "screenshots"
+
             override fun onChange(selfChange: Boolean, uri: Uri?) {
                 super.onChange(selfChange, uri)
 
@@ -86,15 +92,67 @@ class ScreenshotObserverService: Service(), KoinComponent {
                     cursor?.use {
                         if (it.moveToFirst()) {
                             val filePath = it.getString(it.getColumnIndexOrThrow(MediaStore.Images.Media.DATA))
+                            val fileSize = File(filePath).length() // in bytes
                             if (filePath.contains("Screenshots")) {
-                                CoroutineScope(Dispatchers.IO).launch {
-                                    processScreenshot(filePath)
-                                }
+                                handleNewScreenshot(filePath, fileSize)
                             }
                         }
                     }
                 }
             }
+
+            private fun handleNewScreenshot(filePath: String, fileSize: Long) {
+                val currentTime = System.currentTimeMillis()
+                // Skip if pending
+                if (filePath.contains(".pending")) {
+                    Log.d("ScreenshotObserver", "Pending file detected, skipping: $filePath")
+                    return
+                }
+                if (lastScreenshotPath != null && (currentTime - lastScreenshotTime) < 10000) {
+                    if (filePath == lastScreenshotPath) {
+                        // Scrolling screenshot detected
+                        lastScreenshotFileSize = fileSize
+                        lastScreenshotTime = currentTime
+                        // Reschedule the processing
+                        handler.removeCallbacksAndMessages(handlerToken)
+                        scheduleProcessing()
+                    } else {
+                        // Process the previous screenshot
+                        handler.removeCallbacksAndMessages(handlerToken) // Cancel the previous processing
+                        CoroutineScope(Dispatchers.IO).launch {
+                            processScreenshot(lastScreenshotPath!!)
+                        }
+                        // Update for the new screenshot
+                        lastScreenshotPath = filePath
+                        lastScreenshotFileSize = fileSize
+                        lastScreenshotTime = currentTime
+                        scheduleProcessing()
+                    }
+                } else {
+                    // No recent screenshots, handle the new one
+                    lastScreenshotPath = filePath
+                    lastScreenshotFileSize = fileSize
+                    lastScreenshotTime = currentTime
+                    scheduleProcessing()
+                }
+            }
+
+            private fun scheduleProcessing() {
+                handler.postDelayed({
+                    if (System.currentTimeMillis() - lastScreenshotTime >= 10000) {
+                        lastScreenshotPath?.let {
+                            CoroutineScope(Dispatchers.IO).launch {
+                                processScreenshot(filePath = it)
+                            }
+                        }
+                        lastScreenshotPath = null
+                        lastScreenshotFileSize = 0
+                        lastScreenshotTime = 0
+                    }
+                }, handlerToken, 10000)
+            }
+
+
 
             private suspend fun processScreenshot(filePath: String) {
                 // Add your screenshot processing logic here
@@ -133,7 +191,7 @@ class ScreenshotObserverService: Service(), KoinComponent {
                     }
 
                     retries++
-                    Thread.sleep(500) // Wait for 500ms before retrying
+                    delay(1000)
                 }
 
                 if (bitmap != null) {

@@ -21,8 +21,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddCircle
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Icon
@@ -82,7 +82,7 @@ fun CalendarScreen(navController: NavController) {
     val context = LocalContext.current
     val gmailViewModel: GmailViewModel = koinViewModel() // Refresh the
     // view model
-    val scheduleDbViewModel: ScheduleDbViewModel = koinViewModel { parametersOf(context) } //
+    val scheduleDbViewModel: ScheduleDbViewModel = koinViewModel { parametersOf(context, true) } //
     // Refresh the view model
     val listOfEventsToDisplay = remember { mutableStateListOf<EventDataForUI>() }
     val listOfConfirmedTasks = remember { mutableStateListOf<TaskDataForCalendarUI>() }
@@ -92,12 +92,20 @@ fun CalendarScreen(navController: NavController) {
     var selectedTaskId: Long? by remember {
         mutableStateOf(null)
     }
+    var isMinimized by remember { mutableStateOf(true) }
+    val isCheckedStateForConfirmedTasks = remember { mutableStateListOf<Boolean>() }
     // Function to handle the click event and receive data
     val onEventClick: (Long) -> Unit = { eventId ->
         selectedEventId = eventId
     }
-    val onTaskClick: (Long) -> Unit = { taskId ->
-        selectedTaskId = taskId
+    val onTaskClick: (Long, Long?) -> Unit = { taskId, eventIdIfIsEvent ->
+        if (eventIdIfIsEvent!= null && eventIdIfIsEvent != 0L) {
+            selectedEventId = eventIdIfIsEvent
+        }
+        else {
+            selectedTaskId = taskId
+        }
+        // selectedTaskId = taskId
     }
     val onEventDismiss: () -> Unit = {
         selectedEventId = null
@@ -123,19 +131,57 @@ fun CalendarScreen(navController: NavController) {
 
         }
     }
+    val onMinimizedClick: () -> Unit = {
+        isMinimized = !isMinimized
+    }
+
+    val onPostponeClick: (Long) -> Unit =
+        { taskId: Long ->
+        // Postpone task to tomorrow
+        coroutineScope.launch {
+            scheduleDbViewModel.postponeTaskToTomorrow(taskId)
+        }
+            // Remove task from the list
+            listOfConfirmedTasks.removeIf { it.taskId == taskId }
+    }
+
+    val onTaskCheckedStatusChanged: (TaskDataForCalendarUI, Boolean) -> Unit = { task, isChecked ->
+        if (task.taskId != 0L)
+        {
+            isCheckedStateForConfirmedTasks[listOfConfirmedTasks.indexOf(task)] = isChecked
+            task.isChecked = isChecked
+            coroutineScope.launch {
+                scheduleDbViewModel.updateCompletionStatus(task.taskId, isChecked)
+            }
+        }
+    }
+
+    val addToTaskCheckedStatus: (Boolean) -> Unit = { isChecked ->
+        isCheckedStateForConfirmedTasks.add(isChecked)
+    }
+
+    fun resetVariablesForDisplay() {
+        listOfEventsToDisplay.clear()
+        listOfConfirmedTasks.clear()
+        suggestedTasks.clear()
+        isMinimized = true
+        isCheckedStateForConfirmedTasks.clear()
+    }
 
 
     LaunchedEffect (selectedDate.value) { // Events
+        resetVariablesForDisplay()
         coroutineScope.launch {
             // scheduleDbViewModel.updateScheduleDb(context)
-            var timeForSelectedDate = Calendar.getInstance()
+            val timeForSelectedDate = Calendar.getInstance()
             timeForSelectedDate.time = selectedDate.value
-            var selectedDateStartOfDay = timeForSelectedDate.apply {
+            val selectedDateStartOfDay = timeForSelectedDate.apply {
                 set(Calendar.HOUR_OF_DAY, 0)
                 set(Calendar.MINUTE, 0)
                 set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
             }.time
-            var selectedDateEndOfDay = timeForSelectedDate.apply {
+            val selectedDateEndOfDay = timeForSelectedDate.apply {
                 set(Calendar.HOUR_OF_DAY, 23)
                 set(Calendar.MINUTE, 59)
                 set(Calendar.SECOND, 59)
@@ -154,14 +200,29 @@ fun CalendarScreen(navController: NavController) {
                 if (endAsLocalDateTime.toLocalTime().hour == 0 && endAsLocalDateTime.toLocalTime().minute == 0) {
                     endAsLocalDateTime = endAsLocalDateTime.minusSeconds(1)
                 }
-                listOfEventsToDisplay.add(EventDataForUI(
-                    name = it.title,
-                    color = Color(0xFF6DD3CE), // Replace with colors specific to the calendar
-                    start = startAsLocalDateTime,
-                    end = endAsLocalDateTime,
-                    description = it.description,
-                    id = it.id
-                ))
+                // If end time is same as start time, make it a task
+                if (startAsLocalDateTime == endAsLocalDateTime) {
+                    listOfConfirmedTasks.add(
+                        TaskDataForCalendarUI(
+                            taskName = it.title,
+                            taskDescription = it.description ?: "",
+                            isChecked = false,
+                            taskId = 0,
+                            isScheduled = true,
+                            eventIdIfIsEvent = it.id
+                        )
+                    )
+                }
+                else {
+                    listOfEventsToDisplay.add(EventDataForUI(
+                        name = it.title,
+                        color = Color(0xFF6DD3CE), // Replace with colors specific to the calendar
+                        start = startAsLocalDateTime,
+                        end = endAsLocalDateTime,
+                        description = it.description,
+                        id = it.id
+                    ))
+                }
             }
         }
     }
@@ -175,6 +236,7 @@ fun CalendarScreen(navController: NavController) {
                 set(Calendar.HOUR_OF_DAY, 0)
                 set(Calendar.MINUTE, 0)
                 set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
             }.time
             var selectedDateEndOfDay = timeForSelectedDate.apply {
                 set(Calendar.HOUR_OF_DAY, 23)
@@ -189,8 +251,14 @@ fun CalendarScreen(navController: NavController) {
             val allTasksToDisplay = scheduleDbViewModel.getTasksBetween(utcStartOfDay, utcEndOfDay)
             listOfConfirmedTasks.clear()
             allTasksToDisplay.forEach {
-                var startAsLocalDateTime = it.startTime!!.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
-                var endAsLocalDateTime = it.endTime!!.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
+                /*var startAsLocalDateTime = it.startTime!!.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
+                var endAsLocalDateTime: LocalDateTime
+                if (it.endTime == null) {
+                    endAsLocalDateTime = it.startTime
+                }
+                else {
+                    endAsLocalDateTime = it.endTime!!.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
+                }*/
                 listOfConfirmedTasks.add(
                     TaskDataForCalendarUI(
                     taskName = it.title,
@@ -353,7 +421,13 @@ fun CalendarScreen(navController: NavController) {
                     scheduleDbViewModel = scheduleDbViewModel,
                     confirmedTasks = listOfConfirmedTasks,
                     onClick = onTaskClick,
-                    onSuggestedTaskAddClick = onSuggestedTaskAddClick
+                    onSuggestedTaskAddClick = onSuggestedTaskAddClick,
+                    onPostponeClick = onPostponeClick,
+                    isMinimized = isMinimized,
+                    addToTaskCheckedStatus = addToTaskCheckedStatus,
+                    onMinimizedClick = onMinimizedClick,
+                    onTaskCheckedStatusChanged = onTaskCheckedStatusChanged,
+                    isCheckedStateForConfirmedTasks = isCheckedStateForConfirmedTasks,
                 )
                 Spacer(modifier = Modifier.height(10.dp))
                 // EventsView(selectedDate = selectedDate.value)
@@ -385,12 +459,25 @@ fun CalendarScreen(navController: NavController) {
 }
 
 @Composable
-fun TaskListForCalendar(coroutineScope: CoroutineScope, scheduleDbViewModel: ScheduleDbViewModel,
-                        confirmedTasks : List<TaskDataForCalendarUI>, onClick: (Long) -> Unit = {},
-                        onSuggestedTaskAddClick: (Long) -> Unit = {}) {
-    val isCheckedStateForConfirmedTasks = remember { mutableStateListOf<Boolean>() }
+fun TaskListForCalendar(
+    coroutineScope: CoroutineScope,
+    scheduleDbViewModel: ScheduleDbViewModel,
+    confirmedTasks: List<TaskDataForCalendarUI>,
+    onClick: (Long, Long?) -> Unit,
+    onSuggestedTaskAddClick: (Long) -> Unit = {},
+    onPostponeClick: (Long) -> Unit = {},
+    isMinimized: Boolean,
+    addToTaskCheckedStatus: (Boolean) -> Unit,
+    onMinimizedClick: () -> Unit,
+    onTaskCheckedStatusChanged: (TaskDataForCalendarUI, Boolean) -> Unit,
+    isCheckedStateForConfirmedTasks: List<Boolean>
+) {
+    if (confirmedTasks.isEmpty()) {
+        return
+    }
+
     for (task in confirmedTasks) {
-        isCheckedStateForConfirmedTasks.add(task.isChecked)
+        addToTaskCheckedStatus(task.isChecked)
     }
     Column(
         modifier = Modifier
@@ -402,18 +489,17 @@ fun TaskListForCalendar(coroutineScope: CoroutineScope, scheduleDbViewModel: Sch
             .padding(8.dp)
         // Add a border to the column
     ) {
-        for (task in confirmedTasks) {
+        val cardShowCount = if (isMinimized) 1.coerceAtMost(confirmedTasks.size) else
+            confirmedTasks.size
+        for (task in confirmedTasks.subList(0, cardShowCount)) {
             ConfirmedTask(
                 task = task,
                 checked = isCheckedStateForConfirmedTasks[confirmedTasks.indexOf(task)],
                 onCheckedChange = {
-                    isChecked -> isCheckedStateForConfirmedTasks[confirmedTasks.indexOf(task)] = isChecked
-                    task.isChecked = isChecked
-                    coroutineScope.launch {
-                        scheduleDbViewModel.updateCompletionStatus(task.taskId, isChecked)
-                    }
+                    onTaskCheckedStatusChanged(task, it)
                 },
-                onClick = onClick
+                onClick = onClick,
+                onPostponeClick = onPostponeClick
             )
             Spacer(modifier = Modifier.height(4.dp))
         }
@@ -430,7 +516,8 @@ fun TaskListForCalendar(coroutineScope: CoroutineScope, scheduleDbViewModel: Sch
         )*/
         // Spacer(modifier = Modifier.height(4.dp))
 
-        SuggestedTask(
+        // TODO: Enable this whe suggested tasks is supported.
+        /*SuggestedTask(
             task = TaskDataForCalendarUI(
                 taskName = "Suggested Task 1",
                 taskDescription = "This is a suggested task",
@@ -441,13 +528,35 @@ fun TaskListForCalendar(coroutineScope: CoroutineScope, scheduleDbViewModel: Sch
             onClick = onClick
         )
         Spacer(modifier = Modifier.height(4.dp))
-        SeeMoreButton(onClick = {})
+        SeeMoreButton(onClick = {})*/
+
+        // Show this only if task count is more than the cardShowCount
+        if (confirmedTasks.size > cardShowCount || !isMinimized) {
+            Spacer(modifier = Modifier.height(4.dp))
+
+            IconButton(
+                onClick = { onMinimizedClick() },
+                modifier = Modifier.align(Alignment.CenterHorizontally).border(
+                    1.dp,
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                    shape = RoundedCornerShape(100.dp)
+                ).size(24.dp)
+            ) {
+                Box(modifier = Modifier.padding(0.dp)) {  // Inner padding for the icon
+                    Icon(
+                        imageVector = if (isMinimized) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
+                        contentDescription = if (isMinimized) "Expand" else "Collapse",
+                        modifier = Modifier.padding(2.dp)
+                    )
+                }
+            }
+        }
     }
 }
 
 @Composable
 fun ConfirmedTask(task: TaskDataForCalendarUI, checked: Boolean, onCheckedChange: (Boolean) -> Unit,
-                  onClick: (Long) -> Unit) {
+                  onClick: (Long, Long?) -> Unit, onPostponeClick: (Long) -> Unit) {
     val backgroundColor = if (checked) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f) else MaterialTheme.colorScheme.primaryContainer
 
     Row(
@@ -456,14 +565,16 @@ fun ConfirmedTask(task: TaskDataForCalendarUI, checked: Boolean, onCheckedChange
             .fillMaxWidth()
             .background(backgroundColor, shape = RoundedCornerShape(20.dp))
             .padding(4.dp) // Adjust the padding to a minimum
-            .clickable { onClick(task.taskId) }
+            .clickable { onClick(task.taskId, task.eventIdIfIsEvent) }
     ) {
         Spacer(modifier = Modifier.width(10.dp))
+        // Disable if id = 0
         Checkbox(
             checked = checked,
             onCheckedChange = onCheckedChange,
             colors = CheckboxDefaults.colors(MaterialTheme.colorScheme.onPrimaryContainer),
-            modifier = Modifier.size(20.dp) // Reduce size to tightly fit
+            modifier = Modifier.size(20.dp), // Reduce size to tightly fit,
+            enabled = task.taskId != 0L
         )
         Spacer(modifier = Modifier.width(4.dp))
         Text(
@@ -475,26 +586,36 @@ fun ConfirmedTask(task: TaskDataForCalendarUI, checked: Boolean, onCheckedChange
         )
 
         if (!checked) {
-            Spacer(modifier = Modifier.weight(1f))
+            /*Spacer(modifier = Modifier.weight(1f))
             IconButton(onClick = {}, modifier = Modifier.size(24.dp)) {
                 Icon(imageVector = Icons.Default.Warning, contentDescription = "Warning", tint = MaterialTheme.colorScheme.onPrimaryContainer)
+            }*/
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.End
+            ) {
+                IconButton(onClick = { onPostponeClick(task.taskId)}, modifier = Modifier.size(24.dp)) {
+                    Icon(imageVector = Icons.AutoMirrored.Filled.ArrowForward, contentDescription =
+                    "Postpone to tomorrow", tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                }
             }
-            Spacer(modifier = Modifier.width(4.dp))
-            IconButton(onClick = {}, modifier = Modifier.size(24.dp)) {
-                Icon(imageVector = Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Refresh", tint = MaterialTheme.colorScheme.onPrimaryContainer)
-            }
-            Spacer(modifier = Modifier.width(4.dp))
+            /*Spacer(modifier = Modifier.width(4.dp))
+            IconButton(onClick = { onPostponeClick(task.taskId)}, modifier = Modifier.size(24.dp)) {
+                Icon(imageVector = Icons.AutoMirrored.Filled.ArrowForward, contentDescription =
+                "Postpone to tomorrow", tint = MaterialTheme.colorScheme.onPrimaryContainer)
+            }*/
+            /*Spacer(modifier = Modifier.width(4.dp))
             IconButton(onClick = {}, modifier = Modifier.size(24.dp)) {
                 Icon(imageVector = Icons.Default.Close, contentDescription =
                 "Unschedule Task",
                     tint = MaterialTheme.colorScheme.onPrimaryContainer)
-            }
+            }*/
         }
     }
 }
 
 @Composable
-fun SuggestedTask(task: TaskDataForCalendarUI, onClick: (Long) -> Unit, onAddClick: (Long) -> Unit = {}) {
+fun SuggestedTask(task: TaskDataForCalendarUI, onClick: (Long, Long?) -> Unit, onAddClick: (Long) -> Unit = {}) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
@@ -504,7 +625,7 @@ fun SuggestedTask(task: TaskDataForCalendarUI, onClick: (Long) -> Unit, onAddCli
                     (20.dp)
             )
             .padding(4.dp)
-            .clickable { onClick(task.taskId) }
+            .clickable { onClick(task.taskId, task.eventIdIfIsEvent) }
     ) {
         var onAddClick = {
 
@@ -560,6 +681,7 @@ data class TaskDataForCalendarUI(
     val taskDescription: String,
     var isChecked: Boolean,
     val taskId: Long,
-    val isScheduled: Boolean
+    val isScheduled: Boolean,
+    var eventIdIfIsEvent: Long? = null
 )
 

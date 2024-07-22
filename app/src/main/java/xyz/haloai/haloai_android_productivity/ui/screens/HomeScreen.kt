@@ -26,7 +26,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.FavoriteBorder
@@ -37,7 +36,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -71,6 +69,7 @@ import androidx.wear.compose.material.ExperimentalWearMaterialApi
 import androidx.wear.compose.material.FractionalThreshold
 import androidx.wear.compose.material.rememberSwipeableState
 import androidx.wear.compose.material.swipeable
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import xyz.haloai.haloai_android_productivity.R
@@ -145,7 +144,6 @@ fun HomeScreen(navController: NavController) {
                 productivityFeedViewModel.deleteFeedCardById(card.id)
             }
         }
-
     }
 
     fun showOptions(id: Long) {
@@ -162,6 +160,10 @@ fun HomeScreen(navController: NavController) {
                 LazyColumn {
                     items(cardsToDisplay.size) {
                         val card = cardsToDisplay[it]
+                        if (card.primaryActionType == enumFeedCardType.NEWSLETTER){
+                            // Skip for now
+                            return@items
+                        }
                         ProductivityFeedCard(card = card, onDismiss = ::onDismissCard,
                             showOptionsFun = ::showOptions, context = context)
                     }
@@ -251,7 +253,7 @@ fun HomeScreen(navController: NavController) {
                     }
                 }
 
-                FloatingActionButton(
+                /*FloatingActionButton(
                     onClick = {
                         // Add a dummy note to the list
                         coroutineScope.launch {
@@ -274,7 +276,7 @@ fun HomeScreen(navController: NavController) {
                             contentDescription = "Add Icon"
                         )
                     }
-                )
+                )*/
             }
         }
     }
@@ -309,11 +311,11 @@ fun ProductivityFeedCard(card: FeedCardDataForUi, onDismiss: (FeedCardDataForUi,
         if (swipeableState.offset.value != 0f && abs(swipeableState.offset.value) < snapBackThreshold) {
             swipeableState.snapTo(0)
         }
-        else if (swipeableState.offset.value > snapBackThreshold) {
+        else if (swipeableState.offset.value > snapBackThreshold && swipeableState.currentValue == 1) {
             // Handle accept action
             optionDetails.optionClickFunction(card)
             swipeableState.snapTo(0) // Reset the state
-        } else if (swipeableState.offset.value < -snapBackThreshold) {
+        } else if (swipeableState.offset.value < -snapBackThreshold && swipeableState.currentValue == -1) {
             // Handle dismiss action
             onDismiss(card, true)
             swipeableState.snapTo(0) // Reset the state
@@ -549,7 +551,7 @@ fun getOptionDetails(context: Context, card: FeedCardDataForUi, showOptionsFun: 
             optionText = "Add to calendar",
             optionClickFunction =
             {
-                coroutineScope.launch {
+                coroutineScope.launch(Dispatchers.Main) {
                     productivityFeedOptionsViewModel.addToCalendarAsEvent(
                         title = it.title,
                         description = it.description,

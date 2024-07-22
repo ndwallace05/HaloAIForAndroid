@@ -199,6 +199,7 @@ fun AllPermissionSwitches()
         title = "Accounts",
         permission = Manifest.permission.GET_ACCOUNTS
     )
+
 }
 
 @OptIn(ExperimentalPermissionsApi::class)

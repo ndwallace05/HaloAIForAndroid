@@ -64,6 +64,12 @@ class ScheduleDbViewModel(private val repository: ScheduleDbRepository, context:
         }
     }
 
+    suspend fun postponeTaskToTomorrow(id: Long) {
+        withContext(Dispatchers.IO) {
+            repository.postponeTaskToTomorrow(id)
+        }
+    }
+
     fun createNewEvent(
         title: String,
         description: String?,
