@@ -98,7 +98,9 @@ fun HomeScreen(navController: NavController) {
 
     LaunchedEffect(Unit) {
         coroutineScope.launch {
-            val allCards = productivityFeedViewModel.getAllFeedCards()
+            var allCards = productivityFeedViewModel.getAllFeedCards()
+            // Filter all newsletter cards
+            allCards = allCards.filter { it.primaryActionType != enumFeedCardType.NEWSLETTER }
             cardsToDisplay.clear()
             extraCards.clear()
             for (card in allCards.subList(0, numCardsToDisplayInitially.coerceAtMost(allCards.size))) {

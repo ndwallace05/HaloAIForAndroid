@@ -93,6 +93,9 @@ fun CatchUpWidgetLayout(context: Context) {
                 val topNFeedCards = productivityFeedViewModel.getTopFeedCards(numFeedCardsToShow)
                 topNItems.clear()
                 for (feedCard in topNFeedCards) {
+                    if (feedCard.primaryActionType == enumFeedCardType.NEWSLETTER) {
+                        continue
+                    }
                     val topOptionLogo = when (feedCard.primaryActionType) {
                         enumFeedCardType.POTENTIAL_TASK -> R.drawable.tasks
                         enumFeedCardType.POTENTIAL_LTGOAL -> R.drawable.long_term_goals

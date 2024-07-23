@@ -181,7 +181,8 @@ class ProductivityFeedRepository(private val productivityFeedDao: ProductivityFe
             } else if (response.trim().lowercase() == "newsletter") {
                 // Add the email to the feed as a newsletter
                 // TODO: Add a confirmation call to GPT 4o to confirm that this is a newsletter.
-                initialPromptText = "Tell me if this is a newsletter or not. Respond with \"Yes\"/\"No\" only."
+                return@withContext
+                /*initialPromptText = "Tell me if this is a newsletter or not. Respond with \"Yes\"/\"No\" only."
                 promptText = emailBody
                 val isNewsletter = openAIViewModel.getChatGPTResponse(initialPromptText, promptText, modelToUse = "gpt-4o")
                 if (isNewsletter.trim().lowercase() == "no") {
@@ -198,7 +199,7 @@ class ProductivityFeedRepository(private val productivityFeedDao: ProductivityFe
                     description = emailSnippet,
                     extraDescription = "${emailTypeString}: ${emailId}",
                     primaryActionType = enumFeedCardType.NEWSLETTER
-                )
+                )*/
             } else if (response.trim().lowercase() == "respond") {
                 // Add the email to the feed as a newsletter
                 // <Sender Name>: <Subject>
