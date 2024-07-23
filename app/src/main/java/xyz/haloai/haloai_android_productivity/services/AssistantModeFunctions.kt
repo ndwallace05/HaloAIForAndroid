@@ -126,7 +126,7 @@ class AssistantModeFunctions(private val context: Context): KoinComponent {
                 "This will create a long term goal (things like studying for giving the GRE, " +
                 "learning a new instrument, planning to study for an exam, etc. are long-term " +
                 "goals). The deadline is defaulted " +
-                "to one year from now if no other information is presented." +
+                "to one year from now if no other information is present." +
                 " \n" +
                 "The datetime should be a string in \"YYYY-MM-DD HH:MM:SS\" format, and contain nothing else." +
                 // "9. save_contact(string name, string email, string number): Returns nothing.\n" +
