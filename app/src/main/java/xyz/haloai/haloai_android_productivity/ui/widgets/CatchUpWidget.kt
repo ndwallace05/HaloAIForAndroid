@@ -111,6 +111,21 @@ fun CatchUpWidgetLayout(context: Context) {
                         )
                     )
                 }
+                val suggestedTasks = productivityFeedViewModel.getSuggestedTasks()
+                for (task in suggestedTasks) {
+                    // If task hasn't already been added
+                    if (cardsToShow.any { it.title == task.title }) {
+                        continue
+                    }
+                    cardsToShow.add(
+                        DataForCatchUpCard(
+                            title = task.title,
+                            drawable = R.drawable.haloai_logo,
+                            priority = 2,
+                            type = EnumCatchUpCardType.FEED_CARD
+                        )
+                    )
+                }
                 /*topNItems.addAll(topNFeedCards.map { FeedCardDataForUi(
                     id = it.id,
                     title = it.title,
@@ -125,13 +140,13 @@ fun CatchUpWidgetLayout(context: Context) {
         }
         LaunchedEffect(Unit) {
             coroutineScope.launch {
-                val startDateTime = Calendar.getInstance().time
+                var startDateTime = Calendar.getInstance().time
                 val todayEodTime = Calendar.getInstance().apply {
                     set(Calendar.HOUR_OF_DAY, 23)
                     set(Calendar.MINUTE, 59)
                     set(Calendar.SECOND, 59)
                 }.time
-                val events = scheduleDbViewModel.getEventsBetween(startDateTime, todayEodTime)
+                val events = scheduleDbViewModel.getEventsBetween(startDateTime, todayEodTime) // Get events for today
                 eventsForTheDay.clear()
                 for (event in events) {
                     // Convert Date object to LocalDateTime
@@ -140,7 +155,7 @@ fun CatchUpWidgetLayout(context: Context) {
                     // If event starts in next 30 mins / is ongoing, give priority 5. Else, Give 4,3,2,1 based on how far it is from now to EOD.
                     val now = LocalDateTime.now()
                     val thirtyMinsLater = now.plusMinutes(30)
-                    val eventPriority = when {
+                    var eventPriority = when {
                         start.isBefore(now) && end.isAfter(now) -> 5
                         start.isBefore(thirtyMinsLater) -> 5
                         start.isBefore(now.plusHours(1)) -> 4
@@ -148,15 +163,46 @@ fun CatchUpWidgetLayout(context: Context) {
                         start.isBefore(now.plusHours(3)) -> 2
                         else -> 1
                     }
+                    var cardType = EnumCatchUpCardType.EVENT
+                    // If start time and end time are the same, it's a task
+                    if (start == end) {
+                        cardType = EnumCatchUpCardType.TASK
+                        eventPriority = 3
+                    }
                     // Title: Start Time - End Time: Event Title
                     cardsToShow.add(
                         DataForCatchUpCard(
                             title = event.title,
                             drawable = R.drawable.haloai_logo,
                             priority = eventPriority,
-                            type = EnumCatchUpCardType.EVENT,
+                            type = cardType,
                             startTime = event.startTime,
                             endTime = event.endTime
+                        )
+                    )
+                }
+                // Set startDateTime to today BOD
+                startDateTime = Calendar.getInstance().apply {
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }.time
+                var tasksForTheDay = scheduleDbViewModel.getTasksBetween(startDateTime, todayEodTime)
+
+                for (task in tasksForTheDay) {
+                    // Filter tasks that are not completed
+                    if (task.isCompleted) {
+                        continue
+                    }
+                    // Priority 3 for all suggestions
+                    val taskPriority = 3
+                    cardsToShow.add(
+                        DataForCatchUpCard(
+                            title = task.title,
+                            drawable = R.drawable.tasks,
+                            priority = taskPriority,
+                            type = EnumCatchUpCardType.TASK
                         )
                     )
                 }
@@ -234,10 +280,12 @@ fun CatchUpItem(cardData: DataForCatchUpCard) {
     val backgroundColor = when (cardData.type) {
         EnumCatchUpCardType.FEED_CARD -> MaterialTheme.colorScheme.secondaryContainer
         EnumCatchUpCardType.EVENT -> MaterialTheme.colorScheme.tertiaryContainer
+        EnumCatchUpCardType.TASK -> MaterialTheme.colorScheme.tertiaryContainer
     }
     val fontColor = when (cardData.type) {
         EnumCatchUpCardType.FEED_CARD -> MaterialTheme.colorScheme.onSecondaryContainer
         EnumCatchUpCardType.EVENT -> MaterialTheme.colorScheme.onTertiaryContainer
+        EnumCatchUpCardType.TASK -> MaterialTheme.colorScheme.onTertiaryContainer
     }
     if (cardData.type == EnumCatchUpCardType.FEED_CARD) {
         modifier = modifier.clickable(onClick =
@@ -245,6 +293,11 @@ fun CatchUpItem(cardData: DataForCatchUpCard) {
                     "Screens.Home"))
         )
     } else if (cardData.type == EnumCatchUpCardType.EVENT) {
+        modifier = modifier.clickable(onClick =
+            actionStartActivity<MainActivity>(actionParametersOf(assistantScreenParameterKey to
+                    "Screens.Calendar"))
+        )
+    } else if (cardData.type == EnumCatchUpCardType.TASK) {
         modifier = modifier.clickable(onClick =
             actionStartActivity<MainActivity>(actionParametersOf(assistantScreenParameterKey to
                     "Screens.Calendar"))
@@ -299,6 +352,18 @@ fun CatchUpItem(cardData: DataForCatchUpCard) {
                     }
                 }
             }
+            else if (cardData.type == EnumCatchUpCardType.TASK) {
+                Column(
+                    modifier = GlanceModifier.padding(2.dp).wrapContentHeight().width(60.dp)
+                        .background(GlanceTheme.colors.surfaceVariant).cornerRadius(10.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Today!",
+                        style = TextStyle(fontSize = 8.sp, color = GlanceTheme.colors.onSurfaceVariant)
+                    )
+                }
+            }
             else {
                 Image(
                     provider = ImageProvider(cardData.drawable),
@@ -338,5 +403,6 @@ data class DataForCatchUpCard(
 
 enum class EnumCatchUpCardType(val value: Int) {
     FEED_CARD(0),
-    EVENT(1)
+    EVENT(1),
+    TASK(2)
 }

@@ -71,7 +71,10 @@ import androidx.wear.compose.material.rememberSwipeableState
 import androidx.wear.compose.material.swipeable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.koin.compose.getKoin
 import org.koin.compose.koinInject
+import org.koin.core.parameter.parametersOf
+import xyz.haloai.haloai_android_productivity.HaloAI
 import xyz.haloai.haloai_android_productivity.R
 import xyz.haloai.haloai_android_productivity.data.local.entities.enumFeedCardType
 import xyz.haloai.haloai_android_productivity.data.local.entities.enumImportanceScore
@@ -80,6 +83,7 @@ import xyz.haloai.haloai_android_productivity.misc.launchGmailSearch
 import xyz.haloai.haloai_android_productivity.misc.launchOutlookSearch
 import xyz.haloai.haloai_android_productivity.ui.viewmodel.ProductivityFeedOptionsViewModel
 import xyz.haloai.haloai_android_productivity.ui.viewmodel.ProductivityFeedViewModel
+import xyz.haloai.haloai_android_productivity.ui.viewmodel.ScheduleDbViewModel
 import java.util.Date
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -319,13 +323,14 @@ fun ProductivityFeedCard(card: FeedCardDataForUi, onDismiss: (FeedCardDataForUi,
             swipeableState.snapTo(0) // Reset the state
         } else if (swipeableState.offset.value < -snapBackThreshold && swipeableState.currentValue == -1) {
             // Handle dismiss action
-            onDismiss(card, true)
+            optionDetails.optionSwipeLeftFunction(card)
             swipeableState.snapTo(0) // Reset the state
         }
     }
 
     Box (
-        modifier = Modifier.padding(4.dp)
+        modifier = Modifier
+            .padding(4.dp)
             .fillMaxWidth()
             .wrapContentHeight()
             .swipeable(
@@ -348,7 +353,7 @@ fun ProductivityFeedCard(card: FeedCardDataForUi, onDismiss: (FeedCardDataForUi,
             // Swiped left (dismiss)
             LaunchedEffect(Unit) {
                 // Handle dismiss action
-                onDismiss(card, true)
+                optionDetails.optionSwipeLeftFunction(card)
                 swipeableState.snapTo(0) // Reset the state
             }
         }
@@ -411,7 +416,7 @@ fun ProductivityFeedCard(card: FeedCardDataForUi, onDismiss: (FeedCardDataForUi,
 
                 Box(
                     modifier = Modifier
-                        .size(100.dp)
+                        .size(128.dp)
                         .align(Alignment.CenterHorizontally)
                 ) {
                     Base64Image(card.imgB64, Modifier.fillMaxSize())
@@ -429,7 +434,8 @@ fun ProductivityFeedCard(card: FeedCardDataForUi, onDismiss: (FeedCardDataForUi,
                     text = card.title,
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    maxLines = 3
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -439,18 +445,23 @@ fun ProductivityFeedCard(card: FeedCardDataForUi, onDismiss: (FeedCardDataForUi,
                     fontWeight = FontWeight.Thin,
                     fontSize = 14.sp,
                     // color = Color.Gray,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    maxLines = 3
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
 
+                // Remove any text between doNotShowStartToken and doNotShowEndToken
+                val extraDescriptionToShow = card.extraDescription.replace(Regex(".*${HaloAI
+                    .doNotShowStartToken}.*${HaloAI.doNotShowEndToken}.*"), "")
                 Text(
-                    text = card.extraDescription,
+                    text = extraDescriptionToShow,
                     fontSize = 14.sp,
                     // Italic
                     fontStyle = FontStyle.Italic,
                     // color = Color.Gray,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    maxLines = 3
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -518,6 +529,7 @@ data class OptionDetails(
     val optionType: enumFeedCardType,
     val optionText: String,
     val optionClickFunction: (FeedCardDataForUi) -> Unit,
+    val optionSwipeLeftFunction: (FeedCardDataForUi) -> Unit = {},
     val logoResource: Int?,
     val logoVector: ImageVector?,
     val allOptions: MutableList<OptionDetails> = mutableListOf()
@@ -530,6 +542,49 @@ fun getOptionDetails(context: Context, card: FeedCardDataForUi, showOptionsFun: 
 : OptionDetails {
     val productivityFeedOptionsViewModel: ProductivityFeedOptionsViewModel = koinInject()
     val coroutineScope = rememberCoroutineScope()
+    val contextForScheduleDbViewModel = getKoin().get<Context>()
+    val scheduleDbViewModel: ScheduleDbViewModel = koinInject { parametersOf(contextForScheduleDbViewModel) }
+
+    suspend fun deletePreviousThing(extraInfo: ExtraInfo) {
+        when (extraInfo.type) {
+            "event" -> {
+                scheduleDbViewModel.deleteById(extraInfo.id.toLong())
+            }
+            "task" -> {
+                scheduleDbViewModel.deleteById(extraInfo.id.toLong())
+            }
+            else -> {
+                // Do nothing
+            }
+        }
+    }
+
+    fun getFieldsFromExtraDescription(extraDescription: String): ExtraInfo{
+        // Extra info is text inside the doNotShowStartToken and doNotShowEndToken.
+        val extraInfoText = extraDescription.replace(Regex(".*${HaloAI.doNotShowStartToken}"), "")
+            .replace(Regex("${HaloAI.doNotShowEndToken}.*"), "")
+
+        val extraInfo = extraInfoText.split(HaloAI.sepToken)
+        val returnDict = mutableMapOf<String, String>()
+        for (line in extraInfo) {
+            if (line.startsWith("id=")) {
+                returnDict["id"] = line.split("=", limit = 2)[1].trim()
+            }
+            if (line.startsWith("type=")) {
+                returnDict["type"] = line.split("=", limit = 2)[1].trim()
+            }
+            if (line.startsWith("deadline=")) {
+                returnDict["deadline"] = line.split("=", limit = 2)[1].trim()
+            }
+        }
+        val returnVal = ExtraInfo(
+            id = returnDict["id"] ?: "",
+            type = returnDict["type"] ?: "",
+            deadline = returnDict["deadline"] ?: ""
+        )
+        return returnVal
+    }
+
     val optionsList = mutableListOf<OptionDetails>(
         OptionDetails(
             optionType = enumFeedCardType.POTENTIAL_NOTE,
@@ -545,6 +600,9 @@ fun getOptionDetails(context: Context, card: FeedCardDataForUi, showOptionsFun: 
                 }
                 onDismissFun(it, true)
             },
+            optionSwipeLeftFunction = {
+                onDismissFun(it, true) // Dismiss the card, and remove from DB
+            },
             logoResource = R.drawable.notes,
             logoVector = null
         ),
@@ -554,15 +612,28 @@ fun getOptionDetails(context: Context, card: FeedCardDataForUi, showOptionsFun: 
             optionClickFunction =
             {
                 coroutineScope.launch(Dispatchers.Main) {
-                    productivityFeedOptionsViewModel.addToCalendarAsEvent(
-                        title = it.title,
-                        description = it.description,
-                        extraDescription = it.extraDescription,
-                        context = context
-                    )
+                    val extraInfo = getFieldsFromExtraDescription(it.extraDescription)
+
+                    // If the task is a task suggestion, do nothing. Else, delete the card.
+                    if (extraInfo.type != "event") {
+                        deletePreviousThing(extraInfo)
+
+                        productivityFeedOptionsViewModel.addToCalendarAsEvent(
+                            title = it.title,
+                            description = it.description,
+                            extraDescription = it.extraDescription,
+                            context = context
+                        )
+                    }
                 }
                 onDismissFun(it, true)
-
+            },
+            optionSwipeLeftFunction = {
+                coroutineScope.launch(Dispatchers.Main) {
+                    val extraInfo = getFieldsFromExtraDescription(it.extraDescription)
+                    deletePreviousThing(extraInfo)
+                }
+                onDismissFun(it, true) // Dismiss the card, and remove from DB
             },
             logoResource = null,
             logoVector = Icons.Default.DateRange
@@ -584,6 +655,9 @@ fun getOptionDetails(context: Context, card: FeedCardDataForUi, showOptionsFun: 
                 }
                 onDismissFun(it, true)
             },
+            optionSwipeLeftFunction = {
+                onDismissFun(it, true) // Dismiss the card, and remove from DB
+            },
             logoResource = R.drawable.long_term_goals,
             logoVector = null
         ),
@@ -593,16 +667,29 @@ fun getOptionDetails(context: Context, card: FeedCardDataForUi, showOptionsFun: 
             optionClickFunction =
             {
                 coroutineScope.launch {
-                    productivityFeedOptionsViewModel.addToTasks(
-                        title = it.title,
-                        description = it.description,
-                        extraDescription = it.extraDescription,
-                        deadline = it.deadline,
-                        priority = it.importanceScore.ordinal,
-                        context = context
-                    )
+                    val extraInfo = getFieldsFromExtraDescription(it.extraDescription)
+
+                    // If the task is a task suggestion, do nothing. Else, delete the card.
+                    if (extraInfo.type != "task") {
+                        deletePreviousThing(extraInfo)
+                        productivityFeedOptionsViewModel.addToTasks(
+                            title = it.title,
+                            description = it.description,
+                            extraDescription = it.extraDescription,
+                            deadline = it.deadline,
+                            priority = it.importanceScore.ordinal,
+                            context = context
+                        )
+                    }
                     onDismissFun(it, true)
                 }
+            },
+            optionSwipeLeftFunction = {
+                coroutineScope.launch {
+                    val extraInfo = getFieldsFromExtraDescription(it.extraDescription)
+                    deletePreviousThing(extraInfo)
+                }
+                onDismissFun(it, true) // Dismiss the card, and remove from DB
             },
             logoResource = R.drawable.tasks,
             logoVector = null
@@ -614,6 +701,9 @@ fun getOptionDetails(context: Context, card: FeedCardDataForUi, showOptionsFun: 
             {
                 // Show popup to choose an option
                 showOptionsFun(card.id)
+            },
+            optionSwipeLeftFunction = {
+                onDismissFun(it, true) // Dismiss the card, and remove from DB
             },
             logoResource = R.drawable.haloai_logo,
             logoVector = null
@@ -631,6 +721,9 @@ fun getOptionDetails(context: Context, card: FeedCardDataForUi, showOptionsFun: 
                     )
                 }
                 onDismissFun(it, true)
+            },
+            optionSwipeLeftFunction = {
+                onDismissFun(it, true) // Dismiss the card, and remove from DB
             },
             logoResource = null,
             logoVector = Icons.Default.FavoriteBorder
@@ -660,6 +753,9 @@ fun getOptionDetails(context: Context, card: FeedCardDataForUi, showOptionsFun: 
                 Toast.makeText(context, "Open:${emailId}\nSearch:${queryText}", Toast.LENGTH_LONG).show()
                 onDismissFun(it, true)
             },
+            optionSwipeLeftFunction = {
+                onDismissFun(it, true) // Dismiss the card, and remove from DB
+            },
             logoResource = null,
             logoVector = Icons.Default.Email
         ),
@@ -671,8 +767,27 @@ fun getOptionDetails(context: Context, card: FeedCardDataForUi, showOptionsFun: 
                 Toast.makeText(context, "Watch video", Toast.LENGTH_SHORT).show()
                 onDismissFun(it, true)
             },
+            optionSwipeLeftFunction = {
+                onDismissFun(it, true) // Dismiss the card, and remove from DB
+            },
             logoResource = null,
             logoVector = Icons.Default.PlayArrow
+        ),
+        OptionDetails(
+            optionType = enumFeedCardType.TASK_SUGGESTION,
+            optionText = "Mark as done!",
+            optionClickFunction =
+            {
+                coroutineScope.launch {
+                    scheduleDbViewModel.markSuggestedTaskAsComplete(it.title, it.description)
+                    onDismissFun(it, true)
+                }
+            },
+            optionSwipeLeftFunction = {
+                onDismissFun(it, false) // Dismiss the card, and don't remove from DB
+            },
+            logoResource = R.drawable.tasks,
+            logoVector = null
         )
     )
 
@@ -801,3 +916,11 @@ fun getOptionDetails(context: Context, card: FeedCardDataForUi, showOptionsFun: 
         )
     }*/
 }
+
+data class ExtraInfo(
+    val id: String,
+    val type: String,
+    val deadline: String
+)
+
+

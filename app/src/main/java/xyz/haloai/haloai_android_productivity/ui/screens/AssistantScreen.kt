@@ -45,9 +45,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
+import org.koin.core.parameter.parametersOf
+import xyz.haloai.haloai_android_productivity.HaloAI
 import xyz.haloai.haloai_android_productivity.R
 import xyz.haloai.haloai_android_productivity.data.ui.theme.HaloAI_Android_ProductivityTheme
 import xyz.haloai.haloai_android_productivity.ui.viewmodel.AssistantModeFunctionsViewModel
+import xyz.haloai.haloai_android_productivity.ui.viewmodel.VoiceTranscriptionViewModel
 
 val conversation: StateFlow<List<ChatHistory.Message>>
     get() = _conversation
@@ -224,6 +228,16 @@ fun ChatThread(modifier: Modifier, model: ChatHistory, onUserInput: (String) -> 
 @Composable
 fun InputBar(modifier: Modifier, onUserInput: (String) -> Unit) {
     var searchState by remember { mutableStateOf(TextFieldValue("")) }
+    val voiceTranscriptionViewModel: VoiceTranscriptionViewModel = koinInject { parametersOf(HaloAI.activityResultReg) }
+    val voiceInput by voiceTranscriptionViewModel.voiceInput.collectAsState()
+
+    LaunchedEffect(voiceInput) {
+        if (voiceInput.isNotEmpty()) {
+            onUserInput(voiceInput)
+            voiceTranscriptionViewModel.updateVoiceInput("") // Clear after processing
+        }
+    }
+
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -257,13 +271,19 @@ fun InputBar(modifier: Modifier, onUserInput: (String) -> Unit) {
                     .padding(8.dp),
                 singleLine = true
             )
-            Icon(
-                painter = painterResource(id = R.drawable.baseline_mic_24),
-                contentDescription = "Voice Icon",
-                modifier = Modifier
-                    .padding(8.dp)
-                    .size(30.dp)
-            )
+            IconButton(
+                onClick = {
+                    voiceTranscriptionViewModel.startListening()
+                }
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.baseline_mic_24),
+                    contentDescription = "Voice Icon",
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .size(30.dp)
+                )
+            }
             IconButton(
                 onClick = {
                               onUserInput(searchState.text)

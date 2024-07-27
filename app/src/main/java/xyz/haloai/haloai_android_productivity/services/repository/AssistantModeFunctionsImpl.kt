@@ -54,7 +54,6 @@ class AssistantModeFunctionsImpl(private val assistantModeFunctions: AssistantMo
                 }
 
                 EnumFunctionTypes.ADD_TO_NOTES -> {
-
                     assistantModeFunctions.addToNote(noteText = arguments[0].toString(), noteTitle = arguments[1].toString())
                 }
                 EnumFunctionTypes.RESPOND_TO_USER -> {
