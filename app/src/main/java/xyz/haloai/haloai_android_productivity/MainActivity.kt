@@ -18,6 +18,7 @@ import xyz.haloai.haloai_android_productivity.xyz.haloai.haloai_android_producti
 class MainActivity() : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
+
         super.onCreate(savedInstanceState)
         var defaultDestination: Screens = Screens.Home
         val destinationFromIntent = intent.getStringExtra("defaultDestination")
@@ -29,6 +30,7 @@ class MainActivity() : ComponentActivity() {
                 defaultDestination = Screens.Calendar
             }
         }
+        HaloAI.activityResultReg = activityResultRegistry
 
         enableEdgeToEdge()
         setContent {
@@ -39,6 +41,7 @@ class MainActivity() : ComponentActivity() {
             }
         }
     }
+
 }
 
 @Composable

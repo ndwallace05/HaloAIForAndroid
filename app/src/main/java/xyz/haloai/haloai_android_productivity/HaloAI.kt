@@ -2,6 +2,8 @@ package xyz.haloai.haloai_android_productivity
 
 import android.app.Application
 import android.content.Intent
+import android.util.Log
+import androidx.activity.result.ActivityResultRegistry
 import androidx.core.content.ContextCompat
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.work.Configuration
@@ -28,6 +30,7 @@ import xyz.haloai.haloai_android_productivity.di.productivityFeedModule
 import xyz.haloai.haloai_android_productivity.di.productivityFeedOptionsModule
 import xyz.haloai.haloai_android_productivity.di.scheduleDbModule
 import xyz.haloai.haloai_android_productivity.di.textExtractionFromImageModule
+import xyz.haloai.haloai_android_productivity.di.voiceTranscriptionModule
 import xyz.haloai.haloai_android_productivity.di.workManagerModule
 import xyz.haloai.haloai_android_productivity.ui.widgets.AssistantWidget
 import xyz.haloai.haloai_android_productivity.ui.widgets.CatchUpWidget
@@ -44,7 +47,8 @@ class HaloAI: Application(), Configuration.Provider, KoinComponent {
             modules(emailDbModule, scheduleDbModule, gmailModule, openAIModule,
                 assistantModeFunctionsModule, microsoftGraphModule, notesDbModule,
                 ltGoalsDbModule, productivityFeedModule, productivityFeedOptionsModule,
-                miscInfoDbModule, workManagerModule, textExtractionFromImageModule)
+                miscInfoDbModule, workManagerModule, textExtractionFromImageModule,
+                voiceTranscriptionModule)
         }
 
         // Schedule the workers
@@ -101,13 +105,23 @@ class HaloAI: Application(), Configuration.Provider, KoinComponent {
             val permissionStatus = applicationContext.checkSelfPermission(permission)
             if (permissionStatus == android.content.pm.PackageManager.PERMISSION_GRANTED) {
                 // Request permission
-                startScreenshotObserverService()
+                try{
+                    startScreenshotObserverService()
+                }
+                catch (e: Exception) {
+                    // Handle exception
+                    Log.d("HaloAI", "Error starting screenshot observer service: $e")
+                }
             }
         }
     }
 
     companion object {
         var openAI_API_KEY: String = ""
+        val doNotShowStartToken = "<DONOTSHOW>"
+        val doNotShowEndToken = "</DONOTSHOW>"
+        val sepToken = "<DELIM>"
+        var activityResultReg: ActivityResultRegistry? = null
     }
 
     private fun startScreenshotObserverService() {

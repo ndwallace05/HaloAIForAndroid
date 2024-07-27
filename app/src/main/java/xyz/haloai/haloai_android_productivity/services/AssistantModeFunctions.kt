@@ -8,6 +8,7 @@ import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.koin.core.parameter.parametersOf
+import xyz.haloai.haloai_android_productivity.HaloAI
 import xyz.haloai.haloai_android_productivity.data.local.entities.enumFeedCardType
 import xyz.haloai.haloai_android_productivity.ui.viewmodel.NotesDbViewModel
 import xyz.haloai.haloai_android_productivity.ui.viewmodel.OpenAIViewModel
@@ -204,12 +205,22 @@ class AssistantModeFunctions(private val context: Context): KoinComponent {
 
     fun createReminder(reminderText: String, dateAndTimeForReminder: String): String {
         CoroutineScope(Dispatchers.IO).launch {
-            // The date is in "YYYY-MM-DD HH:MM:SS" format
+            // Add a reminder, and allow modification by storing the id and type in extraDescription, which is inserted into the feed. The date should also be in here, so that we can delete the reminder if needed.
             val deadlineAsDate = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).parse(dateAndTimeForReminder)
+            val taskId = scheduleDbViewModel.createNewTask(
+                title = reminderText,
+                description = "",
+                startTime = deadlineAsDate,
+                endTime = null,
+                source = "Assistant",
+            )
+            val extraDescription = "${HaloAI.doNotShowStartToken}id=$taskId${HaloAI.sepToken}type=task${HaloAI.sepToken}deadline=$dateAndTimeForReminder${HaloAI.doNotShowEndToken}"
+            // Format date for display as "Mon, 12th July 2021, 10:00 AM"
+            val formattedDate = SimpleDateFormat("EEE, d MMM yyyy, hh:mm", Locale.getDefault()).format(deadlineAsDate!!)
             productivityFeedViewModel.insertFeedCard(
                 title = reminderText,
-                description = "Reminder",
-                extraDescription = "At $dateAndTimeForReminder",
+                description = "Task added for $formattedDate",
+                extraDescription = extraDescription,
                 deadline = deadlineAsDate,
                 importanceScore = 4,
                 primaryActionType = enumFeedCardType.POTENTIAL_TASK
@@ -221,9 +232,19 @@ class AssistantModeFunctions(private val context: Context): KoinComponent {
 
     fun createUnscheduledReminder(reminderText: String): String {
         CoroutineScope(Dispatchers.IO).launch {
+            val taskId = scheduleDbViewModel.createNewTask(
+                title = reminderText,
+                description = "",
+                startTime = null,
+                endTime = null,
+                source = "Assistant",
+            )
+            val extraDescription = "${HaloAI.doNotShowStartToken}id=$taskId${HaloAI.sepToken}type=task${HaloAI.doNotShowEndToken}"
+
             productivityFeedViewModel.insertFeedCard(
                 title = reminderText,
-                description = "Unscheduled Reminder",
+                description = "Task added",
+                extraDescription = extraDescription,
                 importanceScore = 4,
                 primaryActionType = enumFeedCardType.POTENTIAL_TASK
             )
@@ -278,10 +299,24 @@ class AssistantModeFunctions(private val context: Context): KoinComponent {
         endDateTime: String
     ): String {
         CoroutineScope(Dispatchers.IO).launch {
-            productivityFeedViewModel.insertFeedCard(
+            val startDateTimeAsDate = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).parse(startDateTime)
+            val endDateTimeAsDate = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).parse(endDateTime)
+            val eventId = scheduleDbViewModel.createNewEvent(
                 title = text,
                 description = description,
-                extraDescription = "From $startDateTime to $endDateTime",
+                startTime = startDateTimeAsDate,
+                endTime = endDateTimeAsDate,
+                location = null,
+                attendees = null,
+                sourceEmailId = "Assistant",
+                eventIdFromCal = null,
+            )
+            val extraDescription = "${HaloAI.doNotShowStartToken}id=$eventId${HaloAI.sepToken}type=event${HaloAI.sepToken}deadline=$startDateTime${HaloAI.doNotShowEndToken}"
+
+            productivityFeedViewModel.insertFeedCard(
+                title = text,
+                description = "Event created",
+                extraDescription = description + extraDescription,
                 importanceScore = 4,
                 primaryActionType = enumFeedCardType.POTENTIAL_EVENT
             )

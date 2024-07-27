@@ -1,16 +1,20 @@
 package xyz.haloai.haloai_android_productivity.data.local.repository
 
+import android.content.Context
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import org.koin.core.parameter.parametersOf
 import xyz.haloai.haloai_android_productivity.data.local.dao.ProductivityFeedDao
 import xyz.haloai.haloai_android_productivity.data.local.entities.FeedCard
 import xyz.haloai.haloai_android_productivity.data.local.entities.enumEmailType
 import xyz.haloai.haloai_android_productivity.data.local.entities.enumFeedCardType
 import xyz.haloai.haloai_android_productivity.data.local.entities.enumImportanceScore
+import xyz.haloai.haloai_android_productivity.ui.viewmodel.MiscInfoDbViewModel
 import xyz.haloai.haloai_android_productivity.ui.viewmodel.OpenAIViewModel
+import xyz.haloai.haloai_android_productivity.ui.viewmodel.ScheduleDbViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -18,7 +22,12 @@ import kotlin.io.encoding.ExperimentalEncodingApi
 
 class ProductivityFeedRepository(private val productivityFeedDao: ProductivityFeedDao): KoinComponent {
 
+    val context = getKoin().get<Context>()
     val openAIViewModel: OpenAIViewModel by inject() // To make AI calls
+    val miscInfoDbViewModel: MiscInfoDbViewModel by inject() // To get misc info
+    val scheduleDbViewModel: ScheduleDbViewModel by inject { parametersOf(context) } // To get
+    // scheduled tasks
+    val maxNumSuggestedTasks = 5 // Maximum number of suggested tasks to generate
 
     val basePromptForImageGeneration = "A minimalistic illustration for a card meant to represent" +
             " the following task: \"<TITLE>\". The design should feature clean lines and a simple" +
@@ -228,5 +237,64 @@ class ProductivityFeedRepository(private val productivityFeedDao: ProductivityFe
             Log.e("ProductivityFeedRepository", "Error processing email content: ${e.message}")
             Log.e("ProductivityFeedRepository", "Stack Trace: ${e.stackTraceToString()}")
         }
+    }
+
+    suspend fun updateSuggestedTasks() {
+        // This function will update the suggested tasks in the feed.
+        // First, we will take a count of the number of suggested tasks currently active in the feed.
+        // If we have more than maxNumSuggestedTasks, we will not generate any more tasks.
+        // We will look at timed tasks (tasks which have a deadline) independently, and if they
+        // are urgent, we will generate a task for them independent of the number of tasks in the feed.
+        val currentSuggestedTasks = productivityFeedDao.getAll().filter { it.primaryActionType == enumFeedCardType.TASK_SUGGESTION }
+        var allUnscheduledTasks = scheduleDbViewModel.getAllUnscheduledTasks()
+        // Filter by tasks that are not completed
+        allUnscheduledTasks = allUnscheduledTasks.filter { !it.isCompleted }
+        // Filter by tasks that are not already in the feed
+        allUnscheduledTasks = allUnscheduledTasks.filter { task ->
+            currentSuggestedTasks.none { it.title == task.title }
+        }
+        // Ask GPT to suggest tasks if we have less than maxNumSuggestedTasks
+        if (currentSuggestedTasks.count() < maxNumSuggestedTasks) {
+            val numSuggestedTasksToGet = maxNumSuggestedTasks - currentSuggestedTasks.count()
+            var allTasksListWithIndex = ""
+            val timeFormatter = SimpleDateFormat("MM/dd/yyyy", Locale.getDefault())
+            for (i in 0 until allUnscheduledTasks.count()) {
+                allTasksListWithIndex += "${i + 1}. ${allUnscheduledTasks[i].title}: (Created on " +
+                        "${timeFormatter.format(allUnscheduledTasks[i].creationTime!!)})\n" +
+                        "${allUnscheduledTasks[i].description}\n"
+            }
+            val promptText =
+                "You are a helpful assistant, whose job is to help the user be productive. \n" +
+                        "\n" +
+                        "Given the user's current tasks, give me the ids of ${numSuggestedTasksToGet}" +
+                        " tasks that the user should do on priority. Take into account how long they " +
+                        "have been in the user's task list, and how important they would be for the " +
+                        "user. The tasks are given to you in a random order, so DO NOT consider " +
+                        "that a factor." +
+                        "\n" +
+                        "\n Respond with a list of ids, separated by commas. For example, if you " +
+                        "think the user should do tasks 1, 3, and 5, respond with \"1, 3, 5\". Do not" +
+                        " add any additional text or formatting."
+
+            val allTasks = openAIViewModel.getChatGPTResponse(
+                promptText,
+                allTasksListWithIndex,
+                modelToUse = "gpt-4o"
+            )
+            // Parse the response and add the tasks to the feed
+            val taskIds = allTasks.split(",").map { it.trim().toInt() }
+            for (taskId in taskIds) {
+                insertFeedCard(
+                    title = allUnscheduledTasks[taskId - 1].title,
+                    description = allUnscheduledTasks[taskId - 1].description ?: "",
+                    extraDescription = "Suggested Task",
+                    primaryActionType = enumFeedCardType.TASK_SUGGESTION
+                )
+            }
+        }
+    }
+
+    suspend fun getSuggestedTasks(): List<FeedCard> = withContext(Dispatchers.IO) {
+        return@withContext productivityFeedDao.getAll().filter { it.primaryActionType == enumFeedCardType.TASK_SUGGESTION }
     }
 }

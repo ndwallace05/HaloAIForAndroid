@@ -41,4 +41,12 @@ class ProductivityFeedViewModel(private val repository: ProductivityFeedReposito
         repository.processEmailContent(emailId, emailType, emailSubject, emailSnippet, emailSender, emailBody)
     }
 
+    suspend fun updateSuggestedTasks() {
+        repository.updateSuggestedTasks()
+    }
+
+    suspend fun getSuggestedTasks(): List<FeedCard> {
+        return repository.getSuggestedTasks()
+    }
+
 }

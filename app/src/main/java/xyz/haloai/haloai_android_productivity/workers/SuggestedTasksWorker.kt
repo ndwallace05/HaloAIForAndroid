@@ -6,19 +6,20 @@ import androidx.work.WorkerParameters
 import kotlinx.coroutines.runBlocking
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import xyz.haloai.haloai_android_productivity.ui.viewmodel.MiscInfoDbViewModel
+import xyz.haloai.haloai_android_productivity.ui.viewmodel.ProductivityFeedViewModel
 
 class SuggestedTasksWorker (
     private val context: Context,
     workerParams: WorkerParameters
 ) : Worker(context, workerParams), KoinComponent {
-    val miscInfoDbViewModel: MiscInfoDbViewModel by inject()
+    val productivityFeedViewModel: ProductivityFeedViewModel by inject()
 
     override fun doWork(): Result {
         // TODO: Lookup misc info db, see if suggested tasks have been generated, if not, generate.
         return runBlocking {
             try {
                 // Example: miscInfoDbViewModel.generateSuggestedTasks()
+                productivityFeedViewModel.updateSuggestedTasks()
                 Result.success()
             } catch (e: Exception) {
                 Result.failure()

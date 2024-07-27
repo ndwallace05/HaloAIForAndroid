@@ -222,6 +222,12 @@ class ScheduleDbViewModel(private val repository: ScheduleDbRepository, context:
         return@withContext repository.getAllUnscheduledTasks()
     }
 
+    suspend fun markSuggestedTaskAsComplete(title: String, description: String?) {
+        withContext(Dispatchers.IO) {
+            repository.markSuggestedTaskAsComplete(title, description)
+        }
+    }
+
 }
 
 class ContentViewModelFactory(private val repository: ScheduleDbRepository, private val context: Context) : ViewModelProvider

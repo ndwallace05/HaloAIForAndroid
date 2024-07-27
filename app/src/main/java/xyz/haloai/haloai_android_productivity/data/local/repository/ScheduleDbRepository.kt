@@ -567,4 +567,19 @@ class ScheduleDbRepository(private val scheduleDao: ScheduleEntriesDao): KoinCom
     suspend fun getAllUnscheduledTasks(): List<ScheduleEntry> = withContext(Dispatchers.IO) {
         return@withContext scheduleDao.getAll(enumEventType.UNSCHEDULED_TASK)
     }
+
+    suspend fun markSuggestedTaskAsComplete(title: String, description: String?) {
+        withContext(Dispatchers.IO) {
+            // Find unscheduled task with the given title and description
+            val allTasks = scheduleDao.getAllUnscheduledTasks()
+            for (task in allTasks)
+            {
+                if (task.title == title)
+                {
+                    scheduleDao.markEventAsCompleted(task.id)
+                    break
+                }
+            }
+        }
+    }
 }
