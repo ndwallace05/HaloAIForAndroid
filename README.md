@@ -47,7 +47,7 @@ The app is extremely straightforward to use - just take a screenshot of anything
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/MyHalo_Android.git
+   git clone https://github.com/HaloAI-xyz/HaloAIForAndroid.git
    ```
 
 2. Create a `.env` file in the root directory with the following template:
@@ -109,6 +109,18 @@ MyHalo takes your privacy seriously. The app requires various permissions to pro
 - Storage access for screenshots and files
 - Notification permissions for reminders
 
+All data is processed securely and in accordance with our privacy policy.
+
+## Security Best Practices
+
+1. Never commit the `.env` file to version control
+2. Use environment variables for all sensitive information
+3. Regularly rotate API keys and secrets
+4. Keep dependencies updated to the latest secure versions
+5. Use HTTPS for all API communications
+6. Implement proper error handling and logging
+7. Follow the principle of least privilege for API permissions
+
 ## Contributing
 
 1. Fork the repository
@@ -121,3 +133,7 @@ MyHalo takes your privacy seriously. The app requires various permissions to pro
 1. [Aditya Khandelwal](https://github.com/adityak6798)
 2. [Rohit Nagotkar](https://github.com/rxhxt)
 3. [Shaunak Joshi](https://github.com/GrantorShadow)
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
