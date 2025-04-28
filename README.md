@@ -3,7 +3,7 @@
 ## [Website](https://haloai.xyz/)
 
 Halo AI is an AI-powered productivity assistant for Android that helps you manage your tasks, notes, and schedule more efficiently. The app integrates with various services to provide a seamless productivity experience.
-The app is extremely strauhtforward to use - just take a screenshot of anything you need help with - Halo figures it out, and automatically does the needful. Currently, it is orchestrated to create a "feed" of suggested tasks (which you can confirm by swiping right in the feed when you have the time to review them). Halo also has personalization features, it uses your emails to learn a persona of you (which is stored on device), and is used to personalize the assistant - so it knows exactly what you need and when you need it.
+The app is extremely straightforward to use - just take a screenshot of anything you need help with - Halo figures it out, and automatically does the needful. Currently, it is orchestrated to create a "feed" of suggested tasks (which you can confirm by swiping right in the feed when you have the time to review them). Halo also has personalization features, it uses your emails to learn a persona of you (which is stored on device), and is used to personalize the assistant - so it knows exactly what you need and when you need it.
 
 ## Key Features
 
