@@ -1,6 +1,7 @@
 # MyHalo Android
 
 MyHalo is an AI-powered productivity assistant for Android that helps you manage your tasks, notes, and schedule more efficiently. The app integrates with various services to provide a seamless productivity experience.
+The app is extremely strauhtforward to use - just take a screenshot of anything you need help with - Halo figures it out, and automatically does the needful. Currently, it is orchestrated to create a "feed" of suggested tasks (which you can confirm by swiping right in the feed when you have the time to review them). Halo also has personalization features, it uses your emails to learn a persona of you (which is stored on device), and is used to personalize the assistant - so it knows exactly what you need and when you need it.
 
 ## Key Features
 
@@ -106,18 +107,6 @@ MyHalo takes your privacy seriously. The app requires various permissions to pro
 - Storage access for screenshots and files
 - Notification permissions for reminders
 
-All data is processed securely and in accordance with our privacy policy.
-
-## Security Best Practices
-
-1. Never commit the `.env` file to version control
-2. Use environment variables for all sensitive information
-3. Regularly rotate API keys and secrets
-4. Keep dependencies updated to the latest secure versions
-5. Use HTTPS for all API communications
-6. Implement proper error handling and logging
-7. Follow the principle of least privilege for API permissions
-
 ## Contributing
 
 1. Fork the repository
@@ -125,7 +114,3 @@ All data is processed securely and in accordance with our privacy policy.
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
