@@ -3,6 +3,7 @@ package xyz.haloai.haloai_android_productivity.ui
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,6 +40,14 @@ fun SettingsScreen() {
                 }
             )
             Text("Local LLM")
+        }
+
+        if (currentProvider.value == "local") {
+            Text(
+                text = "Note: Image generation is not supported when using the local LLM.",
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+            )
         }
 
         ModelManagementScreen()
