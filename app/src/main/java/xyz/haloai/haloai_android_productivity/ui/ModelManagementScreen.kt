@@ -3,6 +3,7 @@ package xyz.haloai.haloai_android_productivity.ui
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -18,12 +19,15 @@ fun ModelManagementScreen() {
     val localLlmService = get<LocalLlmService>()
     var downloadProgress by remember { mutableFloatStateOf(0f) }
     var isDownloading by remember { mutableStateOf(false) }
+    var downloadCompleted by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
     Column(modifier = Modifier.padding(16.dp)) {
         Button(
             onClick = {
                 isDownloading = true
+                downloadCompleted = false
+                downloadProgress = 0f
                 coroutineScope.launch {
                     try {
                         modelDownloadService.downloadModel(
@@ -34,6 +38,7 @@ fun ModelManagementScreen() {
                             }
                         )
                         localLlmService.loadModel()
+                        downloadCompleted = true
                     } finally {
                         isDownloading = false
                     }
@@ -45,7 +50,12 @@ fun ModelManagementScreen() {
         }
 
         if (isDownloading) {
+            LinearProgressIndicator(progress = downloadProgress / 100f)
             Text(text = "Downloading: ${downloadProgress.toInt()}%")
+        }
+
+        if (downloadCompleted) {
+            Text(text = "Download complete!")
         }
     }
 }
