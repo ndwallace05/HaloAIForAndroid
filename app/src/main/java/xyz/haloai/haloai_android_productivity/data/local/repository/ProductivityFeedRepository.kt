@@ -13,7 +13,7 @@ import xyz.haloai.haloai_android_productivity.data.local.entities.enumEmailType
 import xyz.haloai.haloai_android_productivity.data.local.entities.enumFeedCardType
 import xyz.haloai.haloai_android_productivity.data.local.entities.enumImportanceScore
 import xyz.haloai.haloai_android_productivity.ui.viewmodel.MiscInfoDbViewModel
-import xyz.haloai.haloai_android_productivity.ui.viewmodel.OpenAIViewModel
+import xyz.haloai.haloai_android_productivity.ui.viewmodel.LlmViewModel
 import xyz.haloai.haloai_android_productivity.ui.viewmodel.ScheduleDbViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -23,7 +23,7 @@ import kotlin.io.encoding.ExperimentalEncodingApi
 class ProductivityFeedRepository(private val productivityFeedDao: ProductivityFeedDao): KoinComponent {
 
     val context = getKoin().get<Context>()
-    val openAIViewModel: OpenAIViewModel by inject() // To make AI calls
+    val llmViewModel: LlmViewModel by inject() // To make AI calls
     val miscInfoDbViewModel: MiscInfoDbViewModel by inject() // To get misc info
     val scheduleDbViewModel: ScheduleDbViewModel by inject { parametersOf(context) } // To get
     // scheduled tasks
@@ -56,7 +56,7 @@ class ProductivityFeedRepository(private val productivityFeedDao: ProductivityFe
         null, deadline: Date? = null, importanceScore: Int? = null, primaryActionType: enumFeedCardType): Long =
         withContext(Dispatchers.IO) {
             val promptForImageGeneration = basePromptForImageGeneration.replace("<TITLE>", title)
-            val imgBase64 = openAIViewModel.generateImageFromPrompt(promptForImageGeneration)
+            val imgBase64 = llmViewModel.generateImageFromPrompt(promptForImageGeneration)
             val creationTime = Date()
 
             val impScore = importanceScore ?: enumImportanceScore.MEDIUM.value // TODO:
@@ -69,7 +69,7 @@ class ProductivityFeedRepository(private val productivityFeedDao: ProductivityFe
                 extraDescription = extraDescription ?: "",
                 deadline = deadline,
                 importanceScore = enumImportanceScore.entries[impScore],
-                imgBase64 = imgBase64,
+                imgBase64 = imgBase64 ?: "",
                 primaryActionType = primaryActionType,
                 creationTime = creationTime
             )
@@ -128,7 +128,7 @@ class ProductivityFeedRepository(private val productivityFeedDao: ProductivityFe
             }
 
             var promptText = "The user's email id is: ${emailId}.\n" + truncatedEmailBody
-            val response = openAIViewModel.getChatGPTResponse(initialPromptText, promptText)
+            val response = llmViewModel.getResponse(initialPromptText, promptText)
             if (response.trim().lowercase() == "task") {
                 // Get the tasks from the email, and add them to the feed
                 initialPromptText =
@@ -158,7 +158,7 @@ class ProductivityFeedRepository(private val productivityFeedDao: ProductivityFe
                             " are no tasks, respond with \"No tasks found\".\n"
 
                 promptText = emailBody
-                val allTasks = openAIViewModel.getChatGPTResponse(
+                val allTasks = llmViewModel.getResponse(
                     initialPromptText,
                     promptText, modelToUse = "gpt-4o"
                 )
@@ -276,7 +276,7 @@ class ProductivityFeedRepository(private val productivityFeedDao: ProductivityFe
                         "think the user should do tasks 1, 3, and 5, respond with \"1, 3, 5\". Do not" +
                         " add any additional text or formatting."
 
-            val allTasks = openAIViewModel.getChatGPTResponse(
+            val allTasks = llmViewModel.getResponse(
                 promptText,
                 allTasksListWithIndex,
                 modelToUse = "gpt-4o"

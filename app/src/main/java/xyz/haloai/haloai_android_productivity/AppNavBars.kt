@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -56,7 +57,7 @@ import xyz.haloai.haloai_android_productivity.xyz.haloai.haloai_android_producti
 import xyz.haloai.haloai_android_productivity.xyz.haloai.haloai_android_productivity.data.ui.screens.PlanWithHaloScreen
 import xyz.haloai.haloai_android_productivity.xyz.haloai.haloai_android_productivity.data.ui.screens.PlanWithHalo_Notes_Screen
 import xyz.haloai.haloai_android_productivity.xyz.haloai.haloai_android_productivity.data.ui.screens.ProfileScreen
-import xyz.haloai.haloai_android_productivity.xyz.haloai.haloai_android_productivity.data.ui.screens.SettingsScreen
+import xyz.haloai.haloai_android_productivity.ui.SettingsScreen
 import xyz.haloai.haloai_android_productivity.xyz.haloai.haloai_android_productivity.data.ui.screens.TasksScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -194,6 +195,11 @@ data class BottomNavigationItem(
                 label = "Plan with Halo",
                 iconRes = R.drawable.long_term_goals,
                 route = Screens.PlanWithHalo.route
+            ),
+            BottomNavigationItem(
+                label = "Settings",
+                iconVector = Icons.Default.Settings,
+                route = Screens.Settings.route
             ),
         )
     }
@@ -356,7 +362,7 @@ fun NavBarsWithContent(destination: Screens = Screens.Home) {
             }
             composable(Screens.Settings.route) {
                 // Settings screen
-                SettingsScreen(navController = navController)
+                SettingsScreen()
             }
             composable(Screens.CustomizeLTGoal.route, arguments = listOf(navArgument("ltGoalId") {
                 defaultValue = "1"

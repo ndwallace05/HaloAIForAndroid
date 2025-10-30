@@ -21,11 +21,12 @@ import org.koin.core.context.startKoin
 import xyz.haloai.haloai_android_productivity.di.assistantModeFunctionsModule
 import xyz.haloai.haloai_android_productivity.di.emailDbModule
 import xyz.haloai.haloai_android_productivity.di.gmailModule
+import xyz.haloai.haloai_android_productivity.di.localLlmModule
 import xyz.haloai.haloai_android_productivity.di.ltGoalsDbModule
 import xyz.haloai.haloai_android_productivity.di.microsoftGraphModule
 import xyz.haloai.haloai_android_productivity.di.miscInfoDbModule
 import xyz.haloai.haloai_android_productivity.di.notesDbModule
-import xyz.haloai.haloai_android_productivity.di.openAIModule
+import xyz.haloai.haloai_android_productivity.di.llmModule
 import xyz.haloai.haloai_android_productivity.di.productivityFeedModule
 import xyz.haloai.haloai_android_productivity.di.productivityFeedOptionsModule
 import xyz.haloai.haloai_android_productivity.di.scheduleDbModule
@@ -44,11 +45,11 @@ class HaloAI: Application(), Configuration.Provider, KoinComponent {
         super.onCreate()
         startKoin {
             androidContext(this@HaloAI)
-            modules(emailDbModule, scheduleDbModule, gmailModule, openAIModule,
+            modules(emailDbModule, scheduleDbModule, gmailModule, llmModule,
                 assistantModeFunctionsModule, microsoftGraphModule, notesDbModule,
                 ltGoalsDbModule, productivityFeedModule, productivityFeedOptionsModule,
                 miscInfoDbModule, workManagerModule, textExtractionFromImageModule,
-                voiceTranscriptionModule)
+                voiceTranscriptionModule, localLlmModule)
         }
 
         // Schedule the workers
@@ -122,6 +123,19 @@ class HaloAI: Application(), Configuration.Provider, KoinComponent {
         val doNotShowEndToken = "</DONOTSHOW>"
         val sepToken = "<DELIM>"
         var activityResultReg: ActivityResultRegistry? = null
+
+        private const val PREFS_NAME = "HaloAI_Prefs"
+        private const val LLM_PROVIDER_KEY = "llm_provider"
+
+        fun setLlmProvider(context: Context, provider: String) {
+            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            prefs.edit().putString(LLM_PROVIDER_KEY, provider).apply()
+        }
+
+        fun getLlmProvider(context: Context): String {
+            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            return prefs.getString(LLM_PROVIDER_KEY, "openai") ?: "openai"
+        }
     }
 
     private fun startScreenshotObserverService() {

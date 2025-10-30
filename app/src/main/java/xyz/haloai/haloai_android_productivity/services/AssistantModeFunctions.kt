@@ -11,7 +11,7 @@ import org.koin.core.parameter.parametersOf
 import xyz.haloai.haloai_android_productivity.HaloAI
 import xyz.haloai.haloai_android_productivity.data.local.entities.enumFeedCardType
 import xyz.haloai.haloai_android_productivity.ui.viewmodel.NotesDbViewModel
-import xyz.haloai.haloai_android_productivity.ui.viewmodel.OpenAIViewModel
+import xyz.haloai.haloai_android_productivity.ui.viewmodel.LlmViewModel
 import xyz.haloai.haloai_android_productivity.ui.viewmodel.ProductivityFeedViewModel
 import xyz.haloai.haloai_android_productivity.ui.viewmodel.ScheduleDbViewModel
 import xyz.haloai.haloai_android_productivity.xyz.haloai.haloai_android_productivity.data.ui.screens.ChatHistory
@@ -22,7 +22,7 @@ import java.util.regex.Pattern
 
 class AssistantModeFunctions(private val context: Context): KoinComponent {
     // Functions used by the Assistant Mode (AI Assistant) to perform tasks like sending emails, scheduling events, etc. for the user
-    val openAIViewModel: OpenAIViewModel by inject()
+    val llmViewModel: LlmViewModel by inject()
     val scheduleDbViewModel: ScheduleDbViewModel by inject { parametersOf(context) }
     val notesDbViewModel: NotesDbViewModel by inject()
     val productivityFeedViewModel: ProductivityFeedViewModel by inject()
@@ -42,7 +42,7 @@ class AssistantModeFunctions(private val context: Context): KoinComponent {
 
     suspend fun convert_chat_to_functions(conversation: List<ChatHistory.Message>): String {
         val currentDateTime = getCurrentTimeFormatted()
-        val output = openAIViewModel.getChatGPTResponse(
+        val output = llmViewModel.getResponse(
             "You are a helpful personal assistant. You are a productivity focused assistant, with access to the following functions:  \n" +
                     "1. create_reminder(string reminderText, string dateAndTimeForReminder): This will create a reminder with the given text at the given time. The datetime should be in \"YYYY-MM-DD HH:MM:SS\" format.\n" +
                     "2. create_unscheduled_reminder(string reminderText): This will create an unscheduled reminder. \n" +
@@ -191,7 +191,7 @@ class AssistantModeFunctions(private val context: Context): KoinComponent {
                 "create_reminder(\"Homework #2\", \"2024-07-18 09:00:00\")\n" +
                 "\n"
 
-        val output = openAIViewModel.getChatGPTResponse(
+        val output = llmViewModel.getResponse(
             initialPromptText,
             text,
             modelToUse = "gpt-4o"
@@ -278,7 +278,7 @@ class AssistantModeFunctions(private val context: Context): KoinComponent {
     }
 
     suspend fun askAi(prompt: String): String {
-        return openAIViewModel.getChatGPTResponse(
+        return llmViewModel.getResponse(
             "INSTRUCTIONS: You will be given the task to perform. Only respond with the exact required output. Don't use any additional formatting.",
             prompt
         )

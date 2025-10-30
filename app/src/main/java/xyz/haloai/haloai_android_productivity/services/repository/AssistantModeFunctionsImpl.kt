@@ -7,7 +7,7 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import xyz.haloai.haloai_android_productivity.services.AssistantModeFunctions
 import xyz.haloai.haloai_android_productivity.services.EnumFunctionTypes
-import xyz.haloai.haloai_android_productivity.ui.viewmodel.OpenAIViewModel
+import xyz.haloai.haloai_android_productivity.ui.viewmodel.LlmViewModel
 import xyz.haloai.haloai_android_productivity.ui.viewmodel.TextExtractionFromImageViewModel
 import xyz.haloai.haloai_android_productivity.xyz.haloai.haloai_android_productivity.data.ui.screens.ChatHistory
 
@@ -21,7 +21,7 @@ interface AssistantModeFunctionsRepository {
 class AssistantModeFunctionsImpl(private val assistantModeFunctions: AssistantModeFunctions): AssistantModeFunctionsRepository, KoinComponent {
 
     // Functions used by the Assistant Mode (AI Assistant) to perform tasks like sending emails, scheduling events, etc. for the user
-    private val openAIViewModel: OpenAIViewModel by inject()
+    private val llmViewModel: LlmViewModel by inject()
     private val textExtractionFromImageViewModel: TextExtractionFromImageViewModel by inject()
 
     private suspend fun ParseFunctionsListAndExecuteOps(functionsList: String): String {

@@ -6,10 +6,10 @@ import org.koin.dsl.module
 import xyz.haloai.haloai_android_productivity.services.OpenAIService
 import xyz.haloai.haloai_android_productivity.services.repository.OpenAIRepository
 import xyz.haloai.haloai_android_productivity.services.repository.OpenAIRepositoryImpl
-import xyz.haloai.haloai_android_productivity.ui.viewmodel.OpenAIViewModel
+import xyz.haloai.haloai_android_productivity.ui.viewmodel.LlmViewModel
 
-val openAIModule = module {
+val llmModule = module {
     single { OpenAIService(androidContext()) }
-    single<OpenAIRepository>  { OpenAIRepositoryImpl(get()) }
-    viewModel { OpenAIViewModel(get()) }
+    single<OpenAIRepository> { OpenAIRepositoryImpl(get()) }
+    viewModel { LlmViewModel(get(), get(), androidContext()) }
 }
