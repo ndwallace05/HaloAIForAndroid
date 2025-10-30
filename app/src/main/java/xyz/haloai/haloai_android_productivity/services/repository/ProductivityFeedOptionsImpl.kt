@@ -9,7 +9,7 @@ import org.koin.core.parameter.parametersOf
 import xyz.haloai.haloai_android_productivity.services.ProductivityFeedOptionsFunctions
 import xyz.haloai.haloai_android_productivity.ui.viewmodel.LTGoalsViewModel
 import xyz.haloai.haloai_android_productivity.ui.viewmodel.NotesDbViewModel
-import xyz.haloai.haloai_android_productivity.ui.viewmodel.OpenAIViewModel
+import xyz.haloai.haloai_android_productivity.ui.viewmodel.LlmViewModel
 import xyz.haloai.haloai_android_productivity.ui.viewmodel.ScheduleDbViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -34,7 +34,7 @@ class ProductivityFeedOptionsImpl(private val productivityFeedOptionsFunctions: 
     val context = getKoin().get<Context>()
     val scheduleDbViewModel: ScheduleDbViewModel by inject { parametersOf(context) }
     val notesDbViewModel: NotesDbViewModel by inject()
-    val openAIViewModel: OpenAIViewModel by inject()
+    val llmViewModel: LlmViewModel by inject()
     val ltGoalsViewModel: LTGoalsViewModel by inject()
 
     override suspend fun addToNote(title: String, description: String, extraDescription: String?) {
@@ -45,7 +45,7 @@ class ProductivityFeedOptionsImpl(private val productivityFeedOptionsFunctions: 
                 "only the content that should be added to the note as a string (without any " +
                 "additional formatting). Keep it short and concise."
         val contextText = "Title: $title\nDescription: $description\nExtra Description: $extraDescription"
-        val contentToAdd = openAIViewModel.getChatGPTResponse(promptText, contextText, "gpt-3" +
+        val contentToAdd = llmViewModel.getResponse(promptText, contextText, "gpt-3" +
                 ".5-turbo-1106", 0.5)
         notesDbViewModel.addToSomeNote(
             content = contentToAdd,
@@ -66,7 +66,7 @@ class ProductivityFeedOptionsImpl(private val productivityFeedOptionsFunctions: 
                 "task is due, return -1 for the date field."
         val contextText = "Title: $title\nDescription: $description\nExtra Description: " +
                 "$extraDescription\nDeadline: $deadline\nPriority: $priority"
-        val responseText = openAIViewModel.getChatGPTResponse(promptText, contextText, temperature = 0.5)
+        val responseText = llmViewModel.getResponse(promptText, contextText, temperature = 0.5)
         // Parse the response
         val taskTitle = responseText.substringAfter("Title: ").substringBefore("Description: ")
         val taskDescription = responseText.substringAfter("Description: ").substringBefore("Date: ")
@@ -118,7 +118,7 @@ class ProductivityFeedOptionsImpl(private val productivityFeedOptionsFunctions: 
                 "newline. Format the start and end time as 'YYYY-MM-DDTHH:MM:SS'.\nIf there is no end time specified, set it to 30 mins from the start time.\nIf there is no start time specified, set it to 30 mins from the current time, which is $currentTime."
         val contextText = "Title: $title\nDescription: $description\nExtra Description: " +
                 "$extraDescription"
-        val responseText = openAIViewModel.getChatGPTResponse(promptText, contextText, "gpt-3" +
+        val responseText = llmViewModel.getResponse(promptText, contextText, "gpt-3" +
                 ".5-turbo-1106")
         // Parse the response
         val eventTitle = responseText.substringAfter("Title: ").substringBefore("Description: ")

@@ -15,7 +15,7 @@ import xyz.haloai.haloai_android_productivity.data.local.entities.enumEventType
 import xyz.haloai.haloai_android_productivity.data.ui.viewmodel.EmailDbViewModel
 import xyz.haloai.haloai_android_productivity.services.GmailService
 import xyz.haloai.haloai_android_productivity.ui.viewmodel.MiscInfoDbViewModel
-import xyz.haloai.haloai_android_productivity.ui.viewmodel.OpenAIViewModel
+import xyz.haloai.haloai_android_productivity.ui.viewmodel.LlmViewModel
 import xyz.haloai.haloai_android_productivity.ui.viewmodel.ProductivityFeedViewModel
 import xyz.haloai.haloai_android_productivity.ui.viewmodel.ScheduleDbViewModel
 import java.text.SimpleDateFormat
@@ -41,7 +41,7 @@ class GmailRepositoryImpl(private val gmailApiService: GmailService) :
     private val miscInfoDbViewModel: MiscInfoDbViewModel by inject()
     private val productivityFeedViewModel: ProductivityFeedViewModel by inject()
     private val emailDbViewModel: EmailDbViewModel by inject()
-    private val openAIViewModel: OpenAIViewModel by inject()
+    private val llmViewModel: LlmViewModel by inject()
     private val emailCheckerMutex = Mutex()
 
     override suspend fun getCalendarIdsForGoogleAccount(context: Context, emailId: String): MutableList<Pair<String, String>> {

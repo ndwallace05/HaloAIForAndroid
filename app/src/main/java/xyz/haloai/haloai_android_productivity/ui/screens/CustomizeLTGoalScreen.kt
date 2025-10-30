@@ -50,7 +50,7 @@ import xyz.haloai.haloai_android_productivity.R
 import xyz.haloai.haloai_android_productivity.data.local.entities.LTGoal
 import xyz.haloai.haloai_android_productivity.data.ui.theme.HaloAI_Android_ProductivityTheme
 import xyz.haloai.haloai_android_productivity.ui.viewmodel.LTGoalsViewModel
-import xyz.haloai.haloai_android_productivity.ui.viewmodel.OpenAIViewModel
+import xyz.haloai.haloai_android_productivity.ui.viewmodel.LlmViewModel
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -127,7 +127,7 @@ data class ChatHistoryForCustomizeLTGoal(
 fun CustomizeLTGoalScreen(navController: NavController, ltGoalId: String) {
 
     val ltGoalsViewModel: LTGoalsViewModel = koinInject()
-    val openAIViewModel: OpenAIViewModel = koinInject()
+    val llmViewModel: LlmViewModel = koinInject()
     var currentGoalData by remember { mutableStateOf<LTGoal?>(null) }
     val coroutineScope = rememberCoroutineScope()
     var isLoading by remember { mutableStateOf(true) }
@@ -184,7 +184,7 @@ fun CustomizeLTGoalScreen(navController: NavController, ltGoalId: String) {
             for (message in _conversation.value.subList(1, _conversation.value.size)) {
                 conversationText += if (message.isUserMessage) "User: \n${message.displayText}\n" else "Assistant: \n${message.completeText}\n"
             }
-            val response = openAIViewModel.getChatGPTResponse(initialSeedPromptForAssistant, conversationText, modelToUse = "gpt-4o", temperature = 0.5)
+            val response = llmViewModel.getResponse(initialSeedPromptForAssistant, conversationText, modelToUse = "gpt-4o", temperature = 0.5)
             // Get Actions if any, and update the conversation
             val potentialActions = response.split("\n")
             var responseToUser = ""

@@ -135,4 +135,6 @@ dependencies {
     implementation(libs.androidx.work.runtime.ktx)
     // MLKit
     implementation(libs.text.recognition)
+    // MediaPipe for local LLM
+    implementation("com.google.mediapipe:tasks-genai:0.10.27")
 }

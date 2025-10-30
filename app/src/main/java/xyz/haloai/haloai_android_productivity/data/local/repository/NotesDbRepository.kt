@@ -6,11 +6,11 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import xyz.haloai.haloai_android_productivity.data.local.dao.NoteDao
 import xyz.haloai.haloai_android_productivity.data.local.entities.Note
-import xyz.haloai.haloai_android_productivity.ui.viewmodel.OpenAIViewModel
+import xyz.haloai.haloai_android_productivity.ui.viewmodel.LlmViewModel
 
 class NotesDbRepository(private val noteDao: NoteDao): KoinComponent {
 
-    val openAIViewModel: OpenAIViewModel by inject() // To make AI calls
+    val llmViewModel: LlmViewModel by inject() // To make AI calls
 
     suspend fun insert(title: String, content: String): Long = withContext(Dispatchers.IO) {
         val summary = getSummaryForNote(title, content)
@@ -60,7 +60,7 @@ class NotesDbRepository(private val noteDao: NoteDao): KoinComponent {
                 " max), and make sure it captures the essence of the note. Generate only the " +
                 "summary, and no additional text, formatting, or other content."
         val contextText = "Title: $title\nContent: $content\n\n"
-        return@withContext openAIViewModel.getChatGPTResponse(promptText, contextText)
+        return@withContext llmViewModel.getResponse(promptText, contextText)
     }
 
     suspend fun addToSomeNote(content: String, extraInfo: String?) = withContext(Dispatchers.IO) {
@@ -73,7 +73,7 @@ class NotesDbRepository(private val noteDao: NoteDao): KoinComponent {
         if (extraInfo != null) {
             contextText += "Extra Info: $extraInfo\n"
         }
-        val response = openAIViewModel.getChatGPTResponse(promptText, contextText)
+        val response = llmViewModel.getResponse(promptText, contextText)
         val noteIndex = response.trim().toInt()
         if (noteIndex == -1) {
             insert("New Note", content)

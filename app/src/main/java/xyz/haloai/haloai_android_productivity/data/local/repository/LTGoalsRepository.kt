@@ -6,7 +6,7 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import xyz.haloai.haloai_android_productivity.data.local.dao.LTGoalDao
 import xyz.haloai.haloai_android_productivity.data.local.entities.LTGoal
-import xyz.haloai.haloai_android_productivity.ui.viewmodel.OpenAIViewModel
+import xyz.haloai.haloai_android_productivity.ui.viewmodel.LlmViewModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -14,7 +14,7 @@ import java.util.Locale
 
 class LTGoalsRepository(private val ltGoalDao: LTGoalDao): KoinComponent {
 
-    val openAIViewModel: OpenAIViewModel by inject() // To make AI calls
+    val llmViewModel: LlmViewModel by inject() // To make AI calls
 
     suspend fun insert(title: String, content: String, deadline: Date? = null): Long = withContext(Dispatchers.IO) {
         var currentDate = Date()
@@ -116,7 +116,7 @@ class LTGoalsRepository(private val ltGoalDao: LTGoalDao): KoinComponent {
             deadlineAsString = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(oneYearFromNow.time)
         }
         val contextText = "Title: $title\nContext: $content\nDeadline: $deadlineAsString"
-        val response = openAIViewModel.getChatGPTResponse(promptText, contextText)
+        val response = llmViewModel.getResponse(promptText, contextText)
         // Parse response to get the 4 values
         var parsedResponse = response.split(",")
         if (parsedResponse.size == 4) {
